@@ -61,8 +61,8 @@ User → File→Open → MppReader (MPXJ) → ProjectData/TaskItem → TaskGridV
 ## Branch workflow & release
 
 - **dev-first:** commit to `dev`, let CI build a testable `.exe` artifact, smoke-test on Windows, then `git merge dev --ff-only` into `main`. CI (`.github/workflows/build.yml`) builds on pushes to **both** `dev` and `main` and uploads the `mpp-viewer-win-x64` artifact (30-day retention).
-- **Releases** attach the CI-built binary (reproducible) rather than a local build: download the artifact from the `main` run, then `gh release create vX.Y.Z --target main <exe>` (this creates the tag remotely). Bump `<Version>`/`<FileVersion>` in `MppViewer.csproj` for each release.
-- This is an **early version** shipped as an unsigned exe (expect Windows SmartScreen warnings — documented in README).
+- **Releases** attach the CI-built binary (reproducible) rather than a local build, **code-signed locally before upload**: download the artifact from the `main` run → sign it on a local Windows machine (Certum Open Source cloud cert via SimplySign Desktop) → `gh release create vX.Y.Z --target main <signed-exe>` (this creates the tag remotely). Bump `<Version>`/`<FileVersion>` in `MppViewer.csproj` for each release. The full signed-release procedure (purchase, one-time setup, `signtool` command, verification) is in [`docs/RELEASE.md`](docs/RELEASE.md).
+- **Signing is local, not in CI.** Certum SimplySign has no headless API — the key lives in Certum's cloud HSM, reached only through the SimplySign Desktop app (manual TOTP, 2-hour session). The build stays reproducible in CI; the signature is applied by hand. Releases up to **v1.2.2 were unsigned** (Windows SmartScreen warnings, documented in README); signing is introduced from the next release, and the README's "unsigned"/"on the roadmap" wording is only updated once a signed binary actually ships.
 
 ## Scope (intentionally out, do not add without a request)
 
