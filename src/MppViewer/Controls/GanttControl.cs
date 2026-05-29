@@ -171,8 +171,11 @@ public class GanttControl : Panel
         for (int i = 0; i < _tasks.Count; i++)
         {
             if (!TryRowBounds(i, out int top, out int height)) continue;
-            if (i % 2 == 1)
-                g.FillRectangle(altBrush, 0, top, Width, height);
+            // Malujemy OBA stany jawnie, tą samą regułą i kolorami co tabela
+            // (parzyste = SystemColors.Window/białe, nieparzyste = szary), żeby pasy
+            // były w tej samej fazie — nie polegamy na szarym tle panelu dla "białych".
+            Brush rowBrush = i % 2 == 1 ? altBrush : SystemBrushes.Window;
+            g.FillRectangle(rowBrush, 0, top, Width, height);
             g.DrawLine(linePen, 0, top + height - 1, Width, top + height - 1);
         }
     }
