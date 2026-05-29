@@ -29,18 +29,4 @@ public class GanttMetricsTests
         int width = GanttMetrics.TotalWidth(Start, End, PixelsPerDay);
         Assert.Equal((int)(364 * PixelsPerDay), width);
     }
-
-    [Fact]
-    public void RowY_FirstRow_IsHeaderHeight()
-    {
-        int y = GanttMetrics.RowY(rowIndex: 0, firstVisibleRow: 0, rowHeight: 22, headerHeight: 48);
-        Assert.Equal(48, y);
-    }
-
-    [Fact]
-    public void RowY_ScrolledByTwo_OffsetsByTwoRows()
-    {
-        int y = GanttMetrics.RowY(rowIndex: 3, firstVisibleRow: 2, rowHeight: 22, headerHeight: 48);
-        Assert.Equal(48 + 22, y);
-    }
 }

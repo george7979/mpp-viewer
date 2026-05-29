@@ -40,7 +40,7 @@
 - [ ] **Step 1: Create solution and projects**
 
 ```bash
-cd /home/jerzy/cursor/mpp-viewer
+cd mpp-viewer   # repo root
 dotnet new sln -n MppViewer
 dotnet new winforms -n MppViewer -o src/MppViewer --framework net8.0-windows
 dotnet new xunit -n MppViewer.Tests -o tests/MppViewer.Tests --framework net8.0-windows
@@ -899,7 +899,7 @@ git commit -m "feat: add MainForm with menu, split layout, async file open and s
 - [ ] **Step 1: Create directory structure**
 
 ```bash
-mkdir -p /home/jerzy/cursor/mpp-viewer/.github/workflows
+mkdir -p .github/workflows   # from repo root
 ```
 
 - [ ] **Step 2: Create `.github/workflows/build.yml`**
