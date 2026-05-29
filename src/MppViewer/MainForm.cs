@@ -130,45 +130,46 @@ public class MainForm : Form
         _toolbar.Height = 38;
         _toolbar.Font = new System.Drawing.Font("Segoe UI", 10f);
 
-        // Lewa strona: plik | filtr | widok (zoom/fit bliżej wykresu, który jest po prawej).
+        // Lewa strona: Open | filtr osób | Exit.
         var openButton = new ToolStripButton("Open…") { DisplayStyle = ToolStripItemDisplayStyle.Text };
         openButton.Click += OnOpenClick;
-
-        var zoomOutButton = new ToolStripButton("Zoom −") { DisplayStyle = ToolStripItemDisplayStyle.Text };
-        zoomOutButton.Click += (_, __) => _gantt.ZoomOut();
-        var zoomInButton = new ToolStripButton("Zoom +") { DisplayStyle = ToolStripItemDisplayStyle.Text };
-        zoomInButton.Click += (_, __) => _gantt.ZoomIn();
-        var fitButton = new ToolStripButton("Fit to width") { DisplayStyle = ToolStripItemDisplayStyle.Text };
-        fitButton.Click += (_, __) => _gantt.ZoomToFit();
 
         _resourceCombo.DropDownStyle = ComboBoxStyle.DropDownList;  // tylko wybór z listy, bez wpisywania
         _resourceCombo.AutoSize = false;
         _resourceCombo.Width = 220;
         _resourceCombo.SelectedIndexChanged += OnResourceFilterChanged;
 
-        // Prawa strona (Alignment.Right): pierwszy dodany ląduje najbardziej z prawej,
-        // więc dodajemy Exit, GitHub, About → wizualnie od lewej: About | GitHub | Exit.
-        var exitButton = new ToolStripButton("Exit")
-        { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
+        var exitButton = new ToolStripButton("Exit") { DisplayStyle = ToolStripItemDisplayStyle.Text };
         exitButton.Click += (_, __) => Close();
-        var githubButton = new ToolStripButton("GitHub")
-        { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
-        githubButton.Click += (_, __) => OpenUrl(RepoUrl);
+
+        // Prawa strona (Alignment.Right): sekcja widoku (zoom/fit) tuż przy wykresie + About.
+        // Pierwszy dodany element wyrównany do prawej ląduje najbardziej z prawej, więc dodajemy
+        // About, separator, Fit, Zoom +, Zoom − → wizualnie: Zoom − Zoom + Fit │ About.
         var aboutButton = new ToolStripButton("About")
         { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
         aboutButton.Click += (_, __) => ShowAbout();
+        var fitButton = new ToolStripButton("Fit to width")
+        { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
+        fitButton.Click += (_, __) => _gantt.ZoomToFit();
+        var zoomInButton = new ToolStripButton("Zoom +")
+        { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
+        zoomInButton.Click += (_, __) => _gantt.ZoomIn();
+        var zoomOutButton = new ToolStripButton("Zoom −")
+        { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
+        zoomOutButton.Click += (_, __) => _gantt.ZoomOut();
 
         _toolbar.Items.Add(openButton);
         _toolbar.Items.Add(new ToolStripSeparator());
         _toolbar.Items.Add(new ToolStripLabel("Show assigned to:"));
         _toolbar.Items.Add(_resourceCombo);
         _toolbar.Items.Add(new ToolStripSeparator());
-        _toolbar.Items.Add(zoomOutButton);
-        _toolbar.Items.Add(zoomInButton);
-        _toolbar.Items.Add(fitButton);
         _toolbar.Items.Add(exitButton);
-        _toolbar.Items.Add(githubButton);
+        // Wyrównane do prawej (kolejność dodawania → od prawej krawędzi):
         _toolbar.Items.Add(aboutButton);
+        _toolbar.Items.Add(new ToolStripSeparator { Alignment = ToolStripItemAlignment.Right });
+        _toolbar.Items.Add(fitButton);
+        _toolbar.Items.Add(zoomInButton);
+        _toolbar.Items.Add(zoomOutButton);
         Controls.Add(_toolbar);
     }
 
@@ -184,13 +185,55 @@ public class MainForm : Form
 
     private void ShowAbout()
     {
+        // Własne okno zamiast MessageBox — pozwala na KLIKALNY link do repozytorium
+        // (MessageBox renderuje URL jako zwykły, nieklikalny tekst).
         string header = AppVersion.Length == 0 ? "MPP Viewer" : $"MPP Viewer {AppVersion}";
-        MessageBox.Show(
-            header + "\n\n" +
-            "A portable, read-only viewer for Microsoft Project (.mpp) files.\n\n" +
-            "MIT License\n" +
-            RepoUrl,
-            "About MPP Viewer", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+        using var dlg = new Form
+        {
+            Text = "About MPP Viewer",
+            FormBorderStyle = FormBorderStyle.FixedDialog,
+            StartPosition = FormStartPosition.CenterParent,
+            MinimizeBox = false,
+            MaximizeBox = false,
+            ShowInTaskbar = false,
+            ClientSize = new System.Drawing.Size(430, 190)
+        };
+        if (Icon != null) dlg.Icon = Icon;
+
+        var title = new Label
+        {
+            Text = header,
+            Font = new System.Drawing.Font("Segoe UI", 12f, System.Drawing.FontStyle.Bold),
+            AutoSize = true,
+            Location = new System.Drawing.Point(16, 16)
+        };
+        var desc = new Label
+        {
+            Text = "A portable, read-only viewer for Microsoft Project (.mpp) files.\n\nMIT License",
+            AutoSize = true,
+            MaximumSize = new System.Drawing.Size(398, 0),
+            Location = new System.Drawing.Point(16, 50)
+        };
+        var link = new LinkLabel
+        {
+            Text = RepoUrl,
+            AutoSize = true,
+            Location = new System.Drawing.Point(16, 118)
+        };
+        link.LinkClicked += (_, __) => OpenUrl(RepoUrl);
+        var ok = new Button
+        {
+            Text = "OK",
+            DialogResult = DialogResult.OK,
+            Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+            Size = new System.Drawing.Size(75, 26),
+            Location = new System.Drawing.Point(340, 150)
+        };
+
+        dlg.Controls.AddRange(new Control[] { title, desc, link, ok });
+        dlg.AcceptButton = ok;
+        dlg.ShowDialog(this);
     }
 
     private void OnResourceFilterChanged(object? sender, EventArgs e)
