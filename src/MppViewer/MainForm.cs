@@ -123,6 +123,12 @@ public class MainForm : Form
     private void BuildToolbar()
     {
         _toolbar.GripStyle = ToolStripGripStyle.Hidden;
+        // Wyższy pasek (komfort dla myszy — standard nowoczesnego desktopu) + większa
+        // czcionka, by tekst wypełniał pasek. AutoSize=false, bo inaczej ToolStrip skurczyłby
+        // się do naturalnej wysokości elementów (~25px).
+        _toolbar.AutoSize = false;
+        _toolbar.Height = 38;
+        _toolbar.Font = new System.Drawing.Font("Segoe UI", 10f);
 
         // Lewa strona: plik | widok (zoom) | filtr.
         var openButton = new ToolStripButton("Open…") { DisplayStyle = ToolStripItemDisplayStyle.Text };
