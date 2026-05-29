@@ -142,10 +142,28 @@ public class GanttControl : Panel
 
         int dataBottom = Math.Max(HeaderHeight, Height - _hScroll.Height);
         g.SetClip(new Rectangle(0, HeaderHeight, Width, dataBottom - HeaderHeight));
+        DrawRowGuides(g);
         DrawMonthGridlines(g);
         DrawTaskBars(g);
         DrawDependencies(g);
         g.ResetClip();
+    }
+
+    // Tło wierszy odwzorowane 1:1 z tabeli: naprzemienne pasy + poziome separatory
+    // rysowane z tych samych prostokątów wierszy co paski. Dzięki temu wiersz
+    // tabeli i jego pasek dzielą dokładnie ten sam pas — oko przejeżdża wprost.
+    private void DrawRowGuides(Graphics g)
+    {
+        if (_grid == null) return;
+        using var altBrush = new SolidBrush(Color.FromArgb(245, 245, 248));
+        using var linePen = new Pen(Color.FromArgb(225, 225, 230));
+        for (int i = 0; i < _tasks.Count; i++)
+        {
+            if (!TryRowBounds(i, out int top, out int height)) continue;
+            if (i % 2 == 1)
+                g.FillRectangle(altBrush, 0, top, Width, height);
+            g.DrawLine(linePen, 0, top + height - 1, Width, top + height - 1);
+        }
     }
 
     private void DrawTimelineHeader(Graphics g)

@@ -19,12 +19,24 @@ public class MainForm : Form
         Size = new System.Drawing.Size(1280, 720);
         MinimumSize = new System.Drawing.Size(800, 500);
 
-        BuildMenu();
-        BuildStatusBar();
+        // Kolejność dodawania determinuje dokowanie: kontrolka Dock.Fill musi trafić
+        // do Controls jako pierwsza (najniższy z-order), aby menu (Top) i status (Bottom)
+        // najpierw zarezerwowały swoje krawędzie, zamiast zostać przykryte przez Fill.
         BuildLayout();
+        BuildStatusBar();
+        BuildMenu();
 
         // Wykres odczytuje geometrię wierszy z tabeli i sam nasłuchuje jej przewijania.
         _gantt.AttachGrid(_grid);
+    }
+
+    protected override void OnLoad(EventArgs e)
+    {
+        base.OnLoad(e);
+        // Ustawiane dopiero teraz — w konstruktorze SplitContainer nie ma jeszcze
+        // realnego rozmiaru, a SplitterDistance poza zakresem rzuca wyjątek.
+        int max = _split.Width - _split.Panel2MinSize - _split.SplitterWidth;
+        _split.SplitterDistance = Math.Clamp(480, _split.Panel1MinSize, Math.Max(_split.Panel1MinSize, max));
     }
 
     private void BuildMenu()
@@ -54,7 +66,6 @@ public class MainForm : Form
     {
         _split.Dock = DockStyle.Fill;
         _split.Orientation = Orientation.Vertical;
-        _split.SplitterDistance = 480;
 
         _grid.Dock = DockStyle.Fill;
         _gantt.Dock = DockStyle.Fill;

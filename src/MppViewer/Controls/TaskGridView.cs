@@ -18,6 +18,9 @@ public class TaskGridView : DataGridView
         // startowały na tym samym Y (GanttControl odczytuje pozycje wierszy stąd).
         ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
         ColumnHeadersHeight = GanttControl.HeaderHeight;
+        // Naprzemienne tło wierszy zgodne z pasami w wykresie — ten sam parzysty/nieparzysty
+        // podział pozwala wzrokowo dopasować wiersz tabeli do paska Gantta.
+        AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 248);
         typeof(DataGridView)
             .GetProperty("DoubleBuffered", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .SetValue(this, true);
