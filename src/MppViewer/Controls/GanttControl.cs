@@ -171,10 +171,12 @@ public class GanttControl : Panel
         _taskRowIndex = tasks.Select((t, i) => (t.Id, i))
                              .ToDictionary(x => x.Id, x => x.i);
 
-        // Skala startowa = domyślna, ale nie poniżej "fit to width" (krótki projekt, gdzie
-        // fit wypada powyżej 15px/dzień, ładuje się od razu dopasowany — bez skoku przy
-        // pierwszym oddaleniu). Gdy Width jeszcze nieznane, FitPixelsPerDay schodzi do progu
-        // czytelności i start zostaje DefaultPixelsPerDay.
+        // Skala startowa = domyślna, ale nie poniżej "fit to width", by krótki projekt
+        // (gdzie fit wypada powyżej 15px/dzień) nie startował zbyt oddalony. UWAGA: w tym
+        // miejscu Width bywa jeszcze nieostateczne (MainForm dosuwa splitter dopiero PO
+        // Load), więc dla krótkich projektów dopasowanie domyka się przy pierwszym zoomie
+        // lub zmianie rozmiaru. Gdy Width == 0, FitPixelsPerDay schodzi do progu czytelności
+        // i start zostaje DefaultPixelsPerDay.
         _pixelsPerDay = GanttMetrics.ClampZoom(
             DefaultPixelsPerDay, GanttMetrics.FitPixelsPerDay(Width, _projectStart, _projectEnd));
         _totalWidth = GanttMetrics.TotalWidth(_projectStart, _projectEnd, _pixelsPerDay);

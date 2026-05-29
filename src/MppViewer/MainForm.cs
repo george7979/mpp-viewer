@@ -166,12 +166,21 @@ public class MainForm : Form
         Controls.Add(_toolbar);
     }
 
+    // Wersja aplikacji czytana z assembly — jedno źródło dla stopki i okna About.
+    private static string AppVersion
+    {
+        get
+        {
+            var v = typeof(MainForm).Assembly.GetName().Version;
+            return v is null ? "" : $"v{v.Major}.{v.Minor}.{v.Build}";
+        }
+    }
+
     private void ShowAbout()
     {
-        var v = GetType().Assembly.GetName().Version;
-        string version = v is null ? "" : $" v{v.Major}.{v.Minor}.{v.Build}";
+        string header = AppVersion.Length == 0 ? "MPP Viewer" : $"MPP Viewer {AppVersion}";
         MessageBox.Show(
-            $"MPP Viewer{version}\n\n" +
+            header + "\n\n" +
             "A portable, read-only viewer for Microsoft Project (.mpp) files.\n\n" +
             "MIT License\n" +
             RepoUrl,
@@ -209,8 +218,7 @@ public class MainForm : Form
         _statusCount.BorderSides = ToolStripStatusLabelBorderSides.Right;
 
         // Wersja czytana z assembly (zawsze zgodna z buildem), w stopce po prawej.
-        var v = GetType().Assembly.GetName().Version;
-        _statusVersion.Text = v is null ? "" : $"v{v.Major}.{v.Minor}.{v.Build}";
+        _statusVersion.Text = AppVersion;
         _statusVersion.Alignment = ToolStripItemAlignment.Right;
 
         _status.Items.AddRange(new ToolStripItem[] { _statusFile, _statusCount, _statusRange, _statusVersion });
