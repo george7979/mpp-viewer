@@ -6,7 +6,7 @@ namespace MppViewer;
 
 public class MainForm : Form
 {
-    private const string AllResources = "(wszyscy)";
+    private const string AllResources = "(everyone)";
 
     private readonly TaskGridView _grid = new();
     private readonly GanttControl _gantt = new();
@@ -14,7 +14,7 @@ public class MainForm : Form
     private readonly ToolStrip _toolbar = new();
     private readonly ToolStripComboBox _resourceCombo = new();
     private readonly StatusStrip _status = new();
-    private readonly ToolStripStatusLabel _statusFile = new() { Text = "Brak pliku" };
+    private readonly ToolStripStatusLabel _statusFile = new() { Text = "No file" };
     private readonly ToolStripStatusLabel _statusCount = new();
     private readonly ToolStripStatusLabel _statusRange = new();
 
@@ -40,23 +40,24 @@ public class MainForm : Form
     }
 
     /// <summary>
-    /// Dosuwa wykres do tabeli: ustawia splitter tuż za kolumnami. Dodaje szerokość
-    /// pionowego paska przewijania TYLKO gdy jest widoczny (inaczej powstaje szara
-    /// przerwa). Liczone po zakończeniu layoutu, gdy auto-rozmiar kolumn i pasek
-    /// są już ustalone.
+    /// Ustawia startową pozycję splittera tak, by kolumna Fill ("Resources") wystartowała
+    /// na szerokości swojej treści. Kolumna jest Fill, więc przylega do wykresu zawsze —
+    /// ta metoda dobiera tylko ładną szerokość początkową (zapas na pionowy pasek; jeśli
+    /// go nie ma, Fill po prostu zajmie te kilka px — bez przerwy).
     /// </summary>
     private void FitSplitterToColumns()
     {
-        BeginInvoke(() =>
-        {
-            int columns = _grid.Columns.GetColumnsWidth(DataGridViewElementStates.Visible);
-            var vbar = _grid.Controls.OfType<VScrollBar>().FirstOrDefault();
-            int vscroll = vbar is { Visible: true } ? vbar.Width : 0;
-            int needed = columns + vscroll + 2;  // +2: obramowanie siatki (FixedSingle)
+        int fixedWidth = 0;
+        foreach (DataGridViewColumn column in _grid.Columns)
+            if (column.AutoSizeMode != DataGridViewAutoSizeColumnMode.Fill)
+                fixedWidth += column.Width;
 
-            int max = _split.Width - _split.Panel2MinSize - _split.SplitterWidth;
-            _split.SplitterDistance = Math.Clamp(needed, _split.Panel1MinSize, Math.Max(_split.Panel1MinSize, max));
-        });
+        int preferred = _grid.Columns["colResources"]!
+            .GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, fixedHeight: true);
+
+        int needed = fixedWidth + preferred + SystemInformation.VerticalScrollBarWidth + 2;
+        int max = _split.Width - _split.Panel2MinSize - _split.SplitterWidth;
+        _split.SplitterDistance = Math.Clamp(needed, _split.Panel1MinSize, Math.Max(_split.Panel1MinSize, max));
     }
 
     private void OnRowDoubleClick(object? sender, DataGridViewCellEventArgs e)
@@ -73,9 +74,9 @@ public class MainForm : Form
     {
         base.OnLoad(e);
         // Ustawiane dopiero teraz — w konstruktorze SplitContainer nie ma jeszcze
-        // realnego rozmiaru, a SplitterDistance poza zakresem rzuca wyjątek.
-        // 780 mieści wszystkie stałe kolumny + kolumnę Fill, więc tabela startuje
-        // bez poziomego scrolla, a "Przypisani" od razu dochodzi do wykresu.
+        // realnego rozmiaru, a SplitterDistance poza zakresem rzuca wyjątek. 780 to
+        // rozsądny podział dla pustego okna; po wczytaniu pliku FitSplitterToColumns
+        // dosuwa wykres do faktycznej szerokości kolumn.
         int max = _split.Width - _split.Panel2MinSize - _split.SplitterWidth;
         _split.SplitterDistance = Math.Clamp(780, _split.Panel1MinSize, Math.Max(_split.Panel1MinSize, max));
     }
@@ -83,9 +84,9 @@ public class MainForm : Form
     private void BuildMenu()
     {
         var menuStrip = new MenuStrip();
-        var fileMenu = new ToolStripMenuItem("Plik");
-        var openItem = new ToolStripMenuItem("Otwórz...", null, OnOpenClick) { ShortcutKeys = Keys.Control | Keys.O };
-        var exitItem = new ToolStripMenuItem("Wyjście", null, (_, __) => Close());
+        var fileMenu = new ToolStripMenuItem("File");
+        var openItem = new ToolStripMenuItem("Open...", null, OnOpenClick) { ShortcutKeys = Keys.Control | Keys.O };
+        var exitItem = new ToolStripMenuItem("Exit", null, (_, __) => Close());
 
         fileMenu.DropDownItems.Add(openItem);
         fileMenu.DropDownItems.Add(new ToolStripSeparator());
@@ -103,14 +104,14 @@ public class MainForm : Form
         _resourceCombo.Width = 220;
         _resourceCombo.SelectedIndexChanged += OnResourceFilterChanged;
 
-        _toolbar.Items.Add(new ToolStripLabel("Pokaż przypisane do:"));
+        _toolbar.Items.Add(new ToolStripLabel("Show assigned to:"));
         _toolbar.Items.Add(_resourceCombo);
         Controls.Add(_toolbar);
     }
 
     private void OnResourceFilterChanged(object? sender, EventArgs e)
     {
-        // Indeks 0 = "(wszyscy)" → brak filtra (null).
+        // Indeks 0 = "(everyone)" → brak filtra (null).
         string? resource = _resourceCombo.SelectedIndex <= 0
             ? null
             : _resourceCombo.SelectedItem as string;
@@ -158,8 +159,8 @@ public class MainForm : Form
     {
         using var dlg = new OpenFileDialog
         {
-            Title = "Otwórz plik MS Project",
-            Filter = "MS Project (*.mpp)|*.mpp|Wszystkie pliki (*.*)|*.*",
+            Title = "Open MS Project file",
+            Filter = "MS Project (*.mpp)|*.mpp|All files (*.*)|*.*",
             FilterIndex = 1
         };
         if (dlg.ShowDialog(this) != DialogResult.OK) return;
@@ -180,23 +181,23 @@ public class MainForm : Form
             FitSplitterToColumns();
 
             _statusFile.Text = System.IO.Path.GetFileName(path);
-            _statusCount.Text = $"{data.Tasks.Count} zadań";
+            _statusCount.Text = $"{data.Tasks.Count} tasks";
             _statusRange.Text = $"{data.ProjectStart:dd.MM.yyyy} – {data.ProjectFinish:dd.MM.yyyy}";
         }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
         {
-            _statusFile.Text = "Błąd";
+            _statusFile.Text = "Error";
             _statusCount.Text = "";
             _statusRange.Text = "";
-            MessageBox.Show($"Nie można otworzyć pliku:\n{ex.Message}", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show($"Cannot open the file:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         catch (Exception)
         {
-            _statusFile.Text = "Błąd";
+            _statusFile.Text = "Error";
             _statusCount.Text = "";
             _statusRange.Text = "";
-            MessageBox.Show("Nie można odczytać pliku. Upewnij się, że jest to prawidłowy plik MS Project (.mpp).",
-                "Błąd odczytu", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show("Cannot read the file. Make sure it is a valid MS Project (.mpp) file.",
+                "Read error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
         {

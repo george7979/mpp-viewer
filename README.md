@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue)
 ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
 
-> **Early version (1.0.0)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
+> **Early version (1.1.0)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
 
 A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It shows the task list and a synchronized Gantt chart side by side — no Microsoft Project installation required.
 
@@ -14,10 +14,12 @@ A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It 
 
 ## Features
 
-- **Task table** — ID, name (indented by WBS outline level), duration, start, finish, and % complete.
-- **Gantt chart** — task bars on a months timeline, progress fill, and Finish-to-Start dependency arrows.
-- **Synchronized view** — the table and the chart share row bands and scroll together, so every row lines up with its bar.
-- **Summary tasks** — parent (roll-up) tasks rendered as bracketed bars.
+- **Task table** — ID, task name (indented by WBS outline level), duration, start, finish, % complete, and assigned resources. The resource column auto-fits its content and the chart snaps flush to the right of the table.
+- **Gantt chart** — task bars on a months timeline with progress fill, Finish-to-Start dependency arrows, and the assigned people shown next to each bar.
+- **Synchronized view** — the table and the chart share row stripes and scroll together, so every row lines up with its bar. The mouse wheel over the chart scrolls both panes.
+- **Jump to a task** — double-click any row to pan the timeline so that task's bar moves to the left edge.
+- **Summary tasks highlighted** — parent (roll-up) tasks appear in **bold** in the table and as bracketed bars in the chart.
+- **Highlight by person** — the "Show assigned to:" toolbar lists everyone assigned in the file; pick a name to grey out every task not assigned to them (in both panes), or *(everyone)* to clear.
 
 ## Requirements
 
@@ -51,10 +53,11 @@ The app then starts normally, and Windows remembers your choice for that file. (
 
 ## Usage
 
-1. **File → Open…** (or `Ctrl+O`) and pick a `.mpp` file.
-2. The task table fills the left pane; the Gantt chart fills the right pane.
-3. Scroll the table vertically — the chart follows. Use the chart's bottom scrollbar to pan the timeline. The mouse wheel over the chart scrolls both panes.
-4. Drag the splitter between the panes to resize them.
+1. **File → Open…** (or `Ctrl+O`) and pick a `.mpp` file. Columns auto-fit and the chart snaps to the right of the table.
+2. Scroll the table vertically — the chart follows. Use the chart's bottom scrollbar to pan the timeline; the mouse wheel over the chart scrolls both panes.
+3. **Double-click a row** to scroll the timeline to that task.
+4. Use **Show assigned to:** at the top to highlight one person's tasks (others are greyed out); pick *(everyone)* to show everyone again.
+5. Drag the splitter between the panes to resize them.
 
 The status bar shows the file name, task count, and the project's date range.
 
@@ -63,8 +66,8 @@ The status bar shows the file name, task count, and the project's date range.
 This is an early, focused release. Out of scope for now:
 
 - Any editing — the viewer is strictly read-only.
-- Resource sheets and resource assignments.
-- Filtering, grouping, and sorting.
+- A resource-centric view (resource sheet / usage). Assigned people *are* shown per task, but there's no per-resource view.
+- Grouping and column sorting — the table stays in WBS (outline) order.
 - Export to PDF / Excel / image.
 - Calendar view and baseline comparison.
 

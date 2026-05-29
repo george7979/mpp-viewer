@@ -36,11 +36,11 @@ public class TaskGridView : DataGridView
         });
         Columns.Add(new DataGridViewTextBoxColumn
         {
-            Name = "colName", HeaderText = "Nazwa zadania", Width = 260
+            Name = "colName", HeaderText = "Task name", Width = 260
         });
         Columns.Add(new DataGridViewTextBoxColumn
         {
-            Name = "colDuration", HeaderText = "Czas trwania", Width = 90, DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight }
+            Name = "colDuration", HeaderText = "Duration", Width = 90, DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight }
         });
         Columns.Add(new DataGridViewTextBoxColumn
         {
@@ -48,18 +48,19 @@ public class TaskGridView : DataGridView
         });
         Columns.Add(new DataGridViewTextBoxColumn
         {
-            Name = "colFinish", HeaderText = "Koniec", Width = 90
+            Name = "colFinish", HeaderText = "Finish", Width = 90
         });
         Columns.Add(new DataGridViewTextBoxColumn
         {
-            Name = "colPct", HeaderText = "% ukończenia", Width = 80, DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight }
+            Name = "colPct", HeaderText = "% complete", Width = 80, DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight }
         });
         Columns.Add(new DataGridViewTextBoxColumn
         {
-            // AllCells: szerokość dopasowana do najdłuższej wartości (nie do reszty panelu).
-            // Dosunięcie wykresu do tej kolumny robi MainForm, ustawiając splitter po wczytaniu.
-            Name = "colResources", HeaderText = "Przypisani",
-            AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells, MinimumWidth = 100
+            // Fill: ostatnia kolumna zawsze rozciąga się do prawej krawędzi siatki, więc
+            // wykres przylega bez przerwy niezależnie od timingu/paska. MainForm ustawia
+            // startowy splitter tak, by Fill wystartował na szerokości treści.
+            Name = "colResources", HeaderText = "Resources",
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, MinimumWidth = 100
         });
 
         // Sortowanie po nagłówkach wyłączone: tabela to hierarchiczne drzewo WBS,

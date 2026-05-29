@@ -1,4 +1,5 @@
 using System.Drawing.Drawing2D;
+using System.Globalization;
 using MppViewer.Models;
 
 namespace MppViewer.Controls;
@@ -212,7 +213,7 @@ public class GanttControl : Panel
             if (x > -120 && x < Width + 20)
             {
                 g.DrawLine(Pens.Gray, x, HeaderHeight - 8, x, HeaderHeight);
-                g.DrawString(current.ToString("MMM yyyy"), monthFont, Brushes.Black, x + 3, 4);
+                g.DrawString(current.ToString("MMM yyyy", CultureInfo.InvariantCulture), monthFont, Brushes.Black, x + 3, 4);
             }
             current = current.AddMonths(1);
         }
