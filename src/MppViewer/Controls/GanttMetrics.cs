@@ -22,6 +22,15 @@ public static class GanttMetrics
         => Math.Clamp(pixelsPerDay, MinPixelsPerDay, MaxPixelsPerDay);
 
     /// <summary>
+    /// Clamp a candidate scale into the zoom range whose lower bound is the fit-to-width
+    /// scale: [fitPixelsPerDay, MaxPixelsPerDay]. Zooming out therefore never goes below the
+    /// point at which the whole project fills the viewport. FitPixelsPerDay returns a value
+    /// in [Min, Max], so fitPixelsPerDay &lt;= MaxPixelsPerDay and the clamp bounds are valid.
+    /// </summary>
+    public static float ClampZoom(float candidate, float fitPixelsPerDay)
+        => Math.Clamp(candidate, fitPixelsPerDay, MaxPixelsPerDay);
+
+    /// <summary>
     /// New (unclamped) horizontal scroll offset that keeps the content point under the
     /// cursor fixed on screen while the scale changes from oldPpd to newPpd. DateToX is
     /// linear in pixelsPerDay, so the content X of a fixed date scales by newPpd/oldPpd.

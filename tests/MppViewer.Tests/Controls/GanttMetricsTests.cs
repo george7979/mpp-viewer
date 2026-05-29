@@ -95,4 +95,20 @@ public class GanttMetricsTests
         float ppd = GanttMetrics.FitPixelsPerDay(1000, Start, Start);
         Assert.Equal(GanttMetrics.MaxPixelsPerDay, ppd);   // documented contract: non-positive span → Max
     }
+
+    [Fact]
+    public void ClampZoom_BelowFitFloor_ReturnsFit()
+        => Assert.Equal(5f, GanttMetrics.ClampZoom(1f, 5f));
+
+    [Fact]
+    public void ClampZoom_AboveMax_ReturnsMax()
+        => Assert.Equal(GanttMetrics.MaxPixelsPerDay, GanttMetrics.ClampZoom(1000f, 5f));
+
+    [Fact]
+    public void ClampZoom_InRange_Unchanged()
+        => Assert.Equal(15f, GanttMetrics.ClampZoom(15f, 5f));
+
+    [Fact]
+    public void ClampZoom_FitEqualsMax_AlwaysReturnsMax()
+        => Assert.Equal(GanttMetrics.MaxPixelsPerDay, GanttMetrics.ClampZoom(15f, GanttMetrics.MaxPixelsPerDay));
 }
