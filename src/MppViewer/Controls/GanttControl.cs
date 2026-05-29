@@ -245,6 +245,14 @@ public class GanttControl : Panel
             if (progressWidth > 0)
                 g.FillRectangle(Brushes.SteelBlue, x1, y, progressWidth, h);
             g.DrawRectangle(Pens.SteelBlue, x1, y, barWidth, h);
+
+            // Przypisani zaraz za paskiem; przycięcie obszaru danych obetnie długie nazwiska.
+            if (task.ResourceNames.Count > 0)
+            {
+                string label = string.Join("; ", task.ResourceNames);
+                float labelY = top + (height - Font.Height) / 2f;
+                g.DrawString(label, Font, Brushes.DimGray, x1 + barWidth + 4, labelY);
+            }
         }
     }
 

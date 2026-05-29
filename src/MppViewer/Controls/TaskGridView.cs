@@ -49,6 +49,10 @@ public class TaskGridView : DataGridView
         {
             Name = "colPct", HeaderText = "% ukończenia", Width = 80, DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight }
         });
+        Columns.Add(new DataGridViewTextBoxColumn
+        {
+            Name = "colResources", HeaderText = "Przypisani", Width = 140
+        });
     }
 
     public void LoadTasks(IReadOnlyList<TaskItem> tasks)
@@ -65,7 +69,8 @@ public class TaskGridView : DataGridView
                 durationText,
                 task.Start?.ToString("yyyy-MM-dd") ?? "",
                 task.Finish?.ToString("yyyy-MM-dd") ?? "",
-                $"{task.PercentComplete}%"
+                $"{task.PercentComplete}%",
+                string.Join("; ", task.ResourceNames)
             );
         }
     }

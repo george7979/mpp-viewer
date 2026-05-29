@@ -15,5 +15,6 @@ public record TaskItem(
     DateTime? Finish,
     TimeSpan Duration,
     int PercentComplete,
-    IReadOnlyList<int> PredecessorIds
+    IReadOnlyList<int> PredecessorIds,
+    IReadOnlyList<string> ResourceNames
 );

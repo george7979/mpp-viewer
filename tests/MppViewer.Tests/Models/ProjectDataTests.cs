@@ -15,7 +15,8 @@ public class ProjectDataTests
             Finish: new DateTime(2025, 1, 10),
             Duration: TimeSpan.FromDays(5),
             PercentComplete: 50,
-            PredecessorIds: Array.Empty<int>()
+            PredecessorIds: Array.Empty<int>(),
+            ResourceNames: new[] { "Jan Kowalski", "Anna Nowak" }
         );
 
         Assert.Equal(1, task.Id);
@@ -26,6 +27,7 @@ public class ProjectDataTests
         Assert.Equal(50, task.PercentComplete);
         Assert.Equal(TimeSpan.FromDays(5), task.Duration);
         Assert.Empty(task.PredecessorIds);
+        Assert.Equal(new[] { "Jan Kowalski", "Anna Nowak" }, task.ResourceNames);
     }
 
     [Fact]
@@ -33,7 +35,7 @@ public class ProjectDataTests
     {
         var tasks = new[]
         {
-            new TaskItem(1, "Task A", 1, null, null, TimeSpan.Zero, 0, Array.Empty<int>()),
+            new TaskItem(1, "Task A", 1, null, null, TimeSpan.Zero, 0, Array.Empty<int>(), Array.Empty<string>()),
         };
         var project = new ProjectData(
             FilePath: "test.mpp",

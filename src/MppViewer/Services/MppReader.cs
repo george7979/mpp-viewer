@@ -26,7 +26,8 @@ public static class MppReader
                 Finish: ToDateTime(task.getFinish()),
                 Duration: ToDuration(task.getDuration()),
                 PercentComplete: ToInt(task.getPercentageComplete()),
-                PredecessorIds: GetPredecessorIds(task)
+                PredecessorIds: GetPredecessorIds(task),
+                ResourceNames: GetResourceNames(task)
             ));
         }
 
@@ -87,5 +88,22 @@ public static class MppReader
             }
         }
         return ids;
+    }
+
+    private static IReadOnlyList<string> GetResourceNames(net.sf.mpxj.Task task)
+    {
+        var list = task.getResourceAssignments();
+        if (list == null) return Array.Empty<string>();
+
+        // One task may have several assignments; keep order, drop blanks and duplicates.
+        var names = new List<string>();
+        foreach (var obj in list.toArray())
+        {
+            if (obj is not ResourceAssignment assignment) continue;
+            var name = assignment.getResource()?.getName();
+            if (!string.IsNullOrWhiteSpace(name) && !names.Contains(name))
+                names.Add(name);
+        }
+        return names;
     }
 }
