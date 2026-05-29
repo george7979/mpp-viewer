@@ -36,6 +36,13 @@ public class GanttControl : Panel
     private TaskGridView? _grid;
     private string? _highlightResource;
 
+    // Stan chwytania (drag-pan) — przesuwanie wykresu myszą/palcem.
+    private bool _panning;
+    private Point _panStart;
+    private int _panStartScrollX;
+    private int _panStartFirstRow;
+    private int _panRowHeight = 1;
+
     public GanttControl()
     {
         DoubleBuffered = true;
@@ -133,6 +140,66 @@ public class GanttControl : Panel
     {
         base.OnMouseEnter(e);
         if (CanFocus) Focus();   // bez focusu kontrolka nie dostaje zdarzeń kółka
+    }
+
+    // Drag-pan: lewy przycisk (lub palec — Windows promuje dotyk na zdarzenia myszy)
+    // chwyta wykres i przesuwa go w obu osiach. Poziom płynnie, pion schodkowo (przez tabelę).
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        base.OnMouseDown(e);
+        if (e.Button != MouseButtons.Left || e.Y < HeaderHeight) return;  // nie łap nagłówka
+
+        _panning = true;
+        _panStart = e.Location;
+        _panStartScrollX = _scrollOffsetX;
+        _panStartFirstRow = _grid != null ? Math.Max(0, _grid.FirstDisplayedScrollingRowIndex) : 0;
+        _panRowHeight = PanRowHeight();
+        Cursor = Cursors.SizeAll;
+        Capture = true;
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        if (!_panning) return;
+
+        // Poziom: treść podąża za kursorem (ciągnięcie w prawo cofa oś czasu) — płynnie.
+        int maxX = Math.Max(_hScroll.Minimum, _hScroll.Maximum - _hScroll.LargeChange + 1);
+        int targetX = Math.Clamp(_panStartScrollX - (e.X - _panStart.X), _hScroll.Minimum, maxX);
+        if (targetX != _scrollOffsetX)
+        {
+            _scrollOffsetX = targetX;
+            _hScroll.Value = targetX;
+            Invalidate();
+        }
+
+        // Pion: schodkowo przez tabelę (DataGridView przewija się co wiersz).
+        if (_grid != null && _grid.RowCount > 0)
+        {
+            int rowDelta = (int)Math.Round((double)(e.Y - _panStart.Y) / _panRowHeight);
+            int targetFirst = Math.Clamp(_panStartFirstRow - rowDelta, 0, _grid.RowCount - 1);
+            if (targetFirst != _grid.FirstDisplayedScrollingRowIndex)
+                try { _grid.FirstDisplayedScrollingRowIndex = targetFirst; }
+                catch (InvalidOperationException) { /* wiersz chwilowo niedostępny */ }
+        }
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+        if (!_panning) return;
+        _panning = false;
+        Capture = false;
+        Cursor = Cursors.Default;
+    }
+
+    // Wysokość bieżącego wiersza tabeli — do przeliczenia pionowego przeciągnięcia na wiersze.
+    private int PanRowHeight()
+    {
+        if (_grid == null || _grid.RowCount == 0) return 1;
+        int idx = Math.Max(0, _grid.FirstDisplayedScrollingRowIndex);
+        int h = _grid.Rows[idx].Height;
+        return h > 0 ? h : 1;
     }
 
     private void RecalcHScroll()
