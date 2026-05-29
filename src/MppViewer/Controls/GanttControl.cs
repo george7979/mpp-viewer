@@ -146,6 +146,9 @@ public class GanttControl : Panel
 
     // Dosuwa _scrollOffsetX do prawidłowego zakresu paska i synchronizuje jego Value
     // (ZoomedScrollOffset może zwrócić wartość ujemną lub powyżej maksimum).
+    // UWAGA: ten obustronny clamp jest konieczny — RecalcHScroll przycina offset tylko
+    // OD GÓRY i tylko warunkowo, nie obsługuje wartości ujemnej (zoom-out przy kursorze
+    // u lewej krawędzi). Nie upraszczać go przez poleganie na RecalcHScroll.
     private void ClampScrollOffset()
     {
         int maxValue = Math.Max(_hScroll.Minimum, _hScroll.Maximum - _hScroll.LargeChange + 1);
