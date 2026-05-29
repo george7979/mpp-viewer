@@ -86,6 +86,22 @@ This is an early, focused release. Out of scope for now:
 - Export to PDF / Excel / image.
 - Baseline comparison.
 
+## Using MPP Viewer in an organization
+
+MPP Viewer is designed to be safe to adopt on managed / corporate machines:
+
+- **Offline & read-only** — it makes no network calls and never writes to or modifies your files, so project data never leaves the machine. This fits confidential / NDA work where cloud "upload your file" viewers aren't an option.
+- **No installation, no admin rights** — a single self-contained `.exe`; nothing is installed system-wide.
+- **Open source & auditable** — the full source is here under the MIT License; it bundles only [MPXJ](https://www.mpxj.org/) (LGPL-2.1) to read the file format (see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)).
+
+**Before rolling it out to a team:**
+
+1. **Get it approved by your IT / security team** rather than running it ad hoc — point them to this repository and the release page as the provenance reference.
+2. **Pin a specific version** (e.g. `v1.2.2`) for everyone, instead of "latest", for consistency and reproducible support.
+3. **Expect the unsigned-binary prompt.** The `.exe` is not yet code-signed, so Windows SmartScreen warns on first launch and some antivirus/EDR re-scans downloaded copies (the file's *Mark of the Web*). IT can resolve this by code-signing, by deploying the file through management tooling (Intune / SCCM), or by allow-listing the file hash; individuals can right-click the file → Properties → **Unblock**.
+
+If you run it on client hardware as a contractor, treat it as your own pre-existing, independently published open-source tool, and clear it through the client's software-approval process like any other utility.
+
 ## Building from source
 
 Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download).
