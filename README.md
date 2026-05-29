@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue)
 ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
 
-> **Early version (1.2.1)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
+> **Early version (1.2.2)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
 
 A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It shows the task list and a synchronized Gantt chart side by side — no Microsoft Project installation required.
 
@@ -73,6 +73,8 @@ The status bar shows the file name, task count, the project's date range, and th
 MPP Viewer shows the project in a **single view** — a task list + Gantt chart (the equivalent of Microsoft Project's *Gantt Chart* view). "Gantt" is a *view*, not a file format: a `.mpp` file is a whole project database, and other tools render it in many views.
 
 It reads MS Project **project files** (`.mpp`) and Microsoft Project's **`.xml` (MSPDI)** export. It cannot read non-project *exports* such as PDF, image, or Excel/CSV — those are reports, not project data.
+
+> **Open files you trust.** Like any document viewer, MPP Viewer parses whatever file you open (through the MPXJ library). Opening a deliberately malformed project file from an untrusted source carries the same theoretical risk as with any parser — prefer files you created or received from people you know.
 
 ## What it does not do (yet)
 
