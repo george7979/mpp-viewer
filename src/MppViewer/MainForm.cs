@@ -40,15 +40,23 @@ public class MainForm : Form
     }
 
     /// <summary>
-    /// Dosuwa wykres do tabeli: ustawia splitter tuż za kolumnami (po ich auto-dopasowaniu
-    /// do treści), z zapasem na pionowy pasek przewijania tabeli, by nie pojawił się poziomy.
+    /// Dosuwa wykres do tabeli: ustawia splitter tuż za kolumnami. Dodaje szerokość
+    /// pionowego paska przewijania TYLKO gdy jest widoczny (inaczej powstaje szara
+    /// przerwa). Liczone po zakończeniu layoutu, gdy auto-rozmiar kolumn i pasek
+    /// są już ustalone.
     /// </summary>
     private void FitSplitterToColumns()
     {
-        int columns = _grid.Columns.GetColumnsWidth(DataGridViewElementStates.Visible);
-        int needed = columns + SystemInformation.VerticalScrollBarWidth + 3;  // pasek pionowy + obramowanie
-        int max = _split.Width - _split.Panel2MinSize - _split.SplitterWidth;
-        _split.SplitterDistance = Math.Clamp(needed, _split.Panel1MinSize, Math.Max(_split.Panel1MinSize, max));
+        BeginInvoke(() =>
+        {
+            int columns = _grid.Columns.GetColumnsWidth(DataGridViewElementStates.Visible);
+            var vbar = _grid.Controls.OfType<VScrollBar>().FirstOrDefault();
+            int vscroll = vbar is { Visible: true } ? vbar.Width : 0;
+            int needed = columns + vscroll + 2;  // +2: obramowanie siatki (FixedSingle)
+
+            int max = _split.Width - _split.Panel2MinSize - _split.SplitterWidth;
+            _split.SplitterDistance = Math.Clamp(needed, _split.Panel1MinSize, Math.Max(_split.Panel1MinSize, max));
+        });
     }
 
     private void OnRowDoubleClick(object? sender, DataGridViewCellEventArgs e)
