@@ -38,7 +38,7 @@ A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It 
 
 ### ⚠️ Windows will warn that this app is "unrecognized" — this is expected
 
-`MppViewer.exe` is **not code-signed** (a code-signing certificate is a paid, identity-verified product this hobby project does not have). Windows therefore treats it as an unknown publisher and shows scary-looking warnings. **They do not mean the file is malware** — only that Windows cannot verify who published it. Because the project is open source, you can read every line and [build the exe yourself](#building-from-source) if you prefer not to trust the prebuilt binary.
+`MppViewer.exe` is **not code-signed** (a code-signing certificate is a paid, identity-verified product this hobby project does not have yet — code signing is on the roadmap). Windows therefore treats it as an unknown publisher and shows scary-looking warnings. **They do not mean the file is malware** — only that Windows cannot verify who published it. Because the project is open source, you can read every line and [build the exe yourself](#building-from-source) if you prefer not to trust the prebuilt binary.
 
 You will likely hit one or two of these:
 
@@ -98,7 +98,7 @@ MPP Viewer is designed to be safe to adopt on managed / corporate machines:
 
 1. **Get it approved by your IT / security team** rather than running it ad hoc — point them to this repository and the release page as the provenance reference.
 2. **Pin a specific version** (e.g. `v1.2.2`) for everyone, instead of "latest", for consistency and reproducible support.
-3. **Expect the unsigned-binary prompt.** The `.exe` is not yet code-signed, so Windows SmartScreen warns on first launch and some antivirus/EDR re-scans downloaded copies (the file's *Mark of the Web*). IT can resolve this by code-signing, by deploying the file through management tooling (Intune / SCCM), or by allow-listing the file hash; individuals can right-click the file → Properties → **Unblock**.
+3. **Expect the unsigned-binary prompt.** The `.exe` is not yet code-signed, so Windows SmartScreen warns on first launch and some antivirus/EDR re-scans downloaded copies (the file's *Mark of the Web*). **Code signing is on the roadmap** and will remove this friction; until then, IT can resolve it by deploying the file through management tooling (Intune / SCCM) or by allow-listing the file hash, and individuals can right-click the file → Properties → **Unblock**.
 
 If you run it on client hardware as a contractor, treat it as your own pre-existing, independently published open-source tool, and clear it through the client's software-approval process like any other utility.
 
