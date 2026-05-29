@@ -3,28 +3,35 @@ using MppViewer.Models;
 
 namespace MppViewer.Controls;
 
+/// <summary>
+/// Wykres Gantta sprzężony z tabelą zadań. Kluczowa zasada: wykres NIE liczy
+/// pozycji wierszy samodzielnie — odczytuje je wprost z powiązanego
+/// <see cref="TaskGridView"/> przez GetRowDisplayRectangle. Dzięki temu paski są
+/// zawsze piksel w piksel wyrównane z wierszami tabeli, a przewijanie pionowe
+/// tabeli automatycznie przewija wykres.
+/// </summary>
 public class GanttControl : Panel
 {
-    private const int HeaderHeight = 48;
-    private const int RowHeight = 22;
-    private const int BarPadding = 3;
+    /// <summary>Wspólna wysokość nagłówka — tabela ustawia ColumnHeadersHeight na tę samą wartość.</summary>
+    public const int HeaderHeight = 44;
     private const float PixelsPerDay = 15f;
 
     private IReadOnlyList<TaskItem> _tasks = Array.Empty<TaskItem>();
     private DateTime _projectStart;
     private DateTime _projectEnd;
+    private int _totalWidth;
     private readonly HScrollBar _hScroll = new();
     private int _scrollOffsetX;
     private Dictionary<int, int> _taskRowIndex = new();
-
-    public int FirstVisibleRow { get; set; }
+    private TaskGridView? _grid;
 
     public GanttControl()
     {
         DoubleBuffered = true;
+        SetStyle(ControlStyles.Selectable, true);
+
         _hScroll.Dock = DockStyle.Bottom;
-        _hScroll.SmallChange = 20;
-        _hScroll.LargeChange = 200;
+        _hScroll.SmallChange = 30;
         _hScroll.Scroll += (_, __) =>
         {
             _scrollOffsetX = _hScroll.Value;
@@ -33,20 +40,98 @@ public class GanttControl : Panel
         Controls.Add(_hScroll);
     }
 
+    /// <summary>
+    /// Sprzęga wykres z tabelą zadań. Wykres odczytuje geometrię wierszy z tabeli
+    /// i przerysowuje się przy każdym jej przewinięciu lub zmianie rozmiaru.
+    /// </summary>
+    public void AttachGrid(TaskGridView grid)
+    {
+        _grid = grid;
+        _grid.Scroll += (_, __) => Invalidate();
+        _grid.RowsAdded += (_, __) => Invalidate();
+        _grid.RowsRemoved += (_, __) => Invalidate();
+        _grid.Resize += (_, __) => Invalidate();
+    }
+
     public void Load(IReadOnlyList<TaskItem> tasks, DateTime start, DateTime end)
     {
         _tasks = tasks;
         _projectStart = start;
-        _projectEnd = end;
+        _projectEnd = end > start ? end : start.AddDays(1);
         _taskRowIndex = tasks.Select((t, i) => (t.Id, i))
                              .ToDictionary(x => x.Id, x => x.i);
 
-        int totalWidth = GanttMetrics.TotalWidth(start, end, PixelsPerDay);
-        _hScroll.Maximum = Math.Max(0, totalWidth + _hScroll.LargeChange - 1);
-        _hScroll.Value = 0;
+        _totalWidth = GanttMetrics.TotalWidth(_projectStart, _projectEnd, PixelsPerDay);
         _scrollOffsetX = 0;
+        _hScroll.Value = 0;
+        RecalcHScroll();
         Invalidate();
     }
+
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+        RecalcHScroll();
+        Invalidate();
+    }
+
+    // Przewijanie kółkiem myszy nad wykresem przewija powiązaną tabelę,
+    // co (przez zdarzenie Scroll) przerysuje wykres — pionowy ruch obu naraz.
+    protected override void OnMouseWheel(MouseEventArgs e)
+    {
+        base.OnMouseWheel(e);
+        if (_grid == null || _grid.RowCount == 0) return;
+
+        int delta = -Math.Sign(e.Delta) * 3;
+        int first = Math.Max(0, _grid.FirstDisplayedScrollingRowIndex) + delta;
+        first = Math.Max(0, Math.Min(first, _grid.RowCount - 1));
+        try { _grid.FirstDisplayedScrollingRowIndex = first; }
+        catch (InvalidOperationException) { /* wiersz chwilowo niedostępny */ }
+    }
+
+    protected override void OnMouseEnter(EventArgs e)
+    {
+        base.OnMouseEnter(e);
+        if (CanFocus) Focus();   // bez focusu kontrolka nie dostaje zdarzeń kółka
+    }
+
+    private void RecalcHScroll()
+    {
+        int viewport = Math.Max(1, Width);
+        // Zakres efektywny scrolla = Maximum - LargeChange + 1. Aby maks. offset
+        // wynosił (_totalWidth - viewport), ustawiamy LargeChange = viewport oraz
+        // Maximum = _totalWidth - 1 (z dolnym ograniczeniem, gdy treść mieści się w oknie).
+        _hScroll.LargeChange = viewport;
+        _hScroll.Maximum = Math.Max(viewport - 1, _totalWidth - 1);
+        _hScroll.Enabled = _totalWidth > viewport;
+        if (_scrollOffsetX > _hScroll.Maximum - _hScroll.LargeChange + 1)
+        {
+            _scrollOffsetX = Math.Max(0, _hScroll.Maximum - _hScroll.LargeChange + 1);
+            _hScroll.Value = _scrollOffsetX;
+        }
+    }
+
+    private float DateToX(DateTime d)
+        => GanttMetrics.DateToX(d, _projectStart, PixelsPerDay) - _scrollOffsetX;
+
+    /// <summary>
+    /// Pobiera dokładny prostokąt wiersza z tabeli. Zwraca false, gdy wiersz jest
+    /// poza widocznym obszarem (tabela zwraca wtedy prostokąt o wysokości 0).
+    /// </summary>
+    private bool TryRowBounds(int rowIndex, out int top, out int height)
+    {
+        top = 0;
+        height = 0;
+        if (_grid == null || rowIndex < 0 || rowIndex >= _grid.RowCount) return false;
+        var r = _grid.GetRowDisplayRectangle(rowIndex, false);
+        if (r.Height == 0) return false;
+        top = r.Top;
+        height = r.Height;
+        return true;
+    }
+
+    private static bool IsSummary(IReadOnlyList<TaskItem> tasks, int i)
+        => i + 1 < tasks.Count && tasks[i + 1].OutlineLevel > tasks[i].OutlineLevel;
 
     protected override void OnPaint(PaintEventArgs e)
     {
@@ -54,14 +139,13 @@ public class GanttControl : Panel
         var g = e.Graphics;
 
         DrawTimelineHeader(g);
+
+        int dataBottom = Math.Max(HeaderHeight, Height - _hScroll.Height);
+        g.SetClip(new Rectangle(0, HeaderHeight, Width, dataBottom - HeaderHeight));
+        DrawMonthGridlines(g);
         DrawTaskBars(g);
         DrawDependencies(g);
-    }
-
-    protected override void OnResize(EventArgs e)
-    {
-        base.OnResize(e);
-        Invalidate();
+        g.ResetClip();
     }
 
     private void DrawTimelineHeader(Graphics g)
@@ -72,16 +156,28 @@ public class GanttControl : Panel
         if (_tasks.Count == 0) return;
 
         using var monthFont = new Font(Font.FontFamily, 8f, FontStyle.Bold);
-
         var current = new DateTime(_projectStart.Year, _projectStart.Month, 1);
         while (current <= _projectEnd)
         {
-            float x = GanttMetrics.DateToX(current, _projectStart, PixelsPerDay) - _scrollOffsetX;
-            if (x > -100 && x < Width + 100)
+            float x = DateToX(current);
+            if (x > -120 && x < Width + 20)
             {
-                g.DrawString(current.ToString("MMM yyyy"), monthFont, Brushes.Black, x + 2, 2);
-                g.DrawLine(Pens.LightGray, x, 0, x, HeaderHeight);
+                g.DrawLine(Pens.Gray, x, HeaderHeight - 8, x, HeaderHeight);
+                g.DrawString(current.ToString("MMM yyyy"), monthFont, Brushes.Black, x + 3, 4);
             }
+            current = current.AddMonths(1);
+        }
+    }
+
+    private void DrawMonthGridlines(Graphics g)
+    {
+        if (_tasks.Count == 0) return;
+        using var pen = new Pen(Color.FromArgb(238, 238, 238));
+        var current = new DateTime(_projectStart.Year, _projectStart.Month, 1);
+        while (current <= _projectEnd)
+        {
+            float x = DateToX(current);
+            if (x >= 0 && x <= Width) g.DrawLine(pen, x, HeaderHeight, x, Height);
             current = current.AddMonths(1);
         }
     }
@@ -90,57 +186,89 @@ public class GanttControl : Panel
     {
         for (int i = 0; i < _tasks.Count; i++)
         {
-            int rowY = GanttMetrics.RowY(i, FirstVisibleRow, RowHeight, HeaderHeight);
-            if (rowY + RowHeight < HeaderHeight || rowY > Height) continue;
-
-            DrawTaskBar(g, _tasks[i], rowY);
+            if (!TryRowBounds(i, out int top, out int height)) continue;
+            DrawTaskBar(g, _tasks[i], top, height, IsSummary(_tasks, i));
         }
     }
 
-    private void DrawTaskBar(Graphics g, TaskItem task, int rowY)
+    private void DrawTaskBar(Graphics g, TaskItem task, int top, int height, bool summary)
     {
         if (task.Start == null || task.Finish == null) return;
 
-        float x1 = GanttMetrics.DateToX(task.Start.Value, _projectStart, PixelsPerDay) - _scrollOffsetX;
-        float x2 = GanttMetrics.DateToX(task.Finish.Value, _projectStart, PixelsPerDay) - _scrollOffsetX;
-        float barWidth = Math.Max(2f, x2 - x1);
-        float barY = rowY + BarPadding;
-        float barHeight = RowHeight - BarPadding * 2;
+        float x1 = DateToX(task.Start.Value);
+        float x2 = DateToX(task.Finish.Value);
+        float barWidth = Math.Max(3f, x2 - x1);
 
-        // Background
-        g.FillRectangle(Brushes.LightSteelBlue, x1, barY, barWidth, barHeight);
+        if (x1 > Width || x1 + barWidth < 0) return;  // całość poza ekranem
 
-        // Progress
-        float progressWidth = barWidth * task.PercentComplete / 100f;
-        if (progressWidth > 0)
-            g.FillRectangle(Brushes.SteelBlue, x1, barY, progressWidth, barHeight);
+        if (summary)
+        {
+            // Zadanie sumaryczne (rodzic): cienka czarna belka z trójkątnymi końcówkami.
+            float h = 5f;
+            float y = top + (height - h) / 2f;
+            g.FillRectangle(Brushes.Black, x1, y, barWidth, h);
+            g.FillPolygon(Brushes.Black, new[]
+            {
+                new PointF(x1, y), new PointF(x1, y + 9), new PointF(x1 + 6, y)
+            });
+            g.FillPolygon(Brushes.Black, new[]
+            {
+                new PointF(x1 + barWidth, y), new PointF(x1 + barWidth, y + 9), new PointF(x1 + barWidth - 6, y)
+            });
+        }
+        else
+        {
+            float pad = 4f;
+            float y = top + pad;
+            float h = Math.Max(6f, height - pad * 2);
 
-        // Border
-        g.DrawRectangle(Pens.DarkSlateGray, x1, barY, barWidth, barHeight);
+            g.FillRectangle(Brushes.LightSteelBlue, x1, y, barWidth, h);
+            float progressWidth = barWidth * Math.Clamp(task.PercentComplete, 0, 100) / 100f;
+            if (progressWidth > 0)
+                g.FillRectangle(Brushes.SteelBlue, x1, y, progressWidth, h);
+            g.DrawRectangle(Pens.SteelBlue, x1, y, barWidth, h);
+        }
     }
 
     private void DrawDependencies(Graphics g)
     {
-        using var pen = new Pen(Color.DarkRed, 1f);
-        pen.EndCap = LineCap.ArrowAnchor;
+        var oldMode = g.SmoothingMode;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+
+        using var pen = new Pen(Color.DimGray, 1.2f) { EndCap = LineCap.ArrowAnchor };
 
         for (int i = 0; i < _tasks.Count; i++)
         {
             var task = _tasks[i];
             if (task.Start == null) continue;
+            if (!TryRowBounds(i, out int toTop, out int toH)) continue;
+
             foreach (var predId in task.PredecessorIds)
             {
-                if (!_taskRowIndex.TryGetValue(predId, out int predIndex)) continue;
-                var pred = _tasks[predIndex];
+                if (!_taskRowIndex.TryGetValue(predId, out int p)) continue;
+                var pred = _tasks[p];
                 if (pred.Finish == null) continue;
+                if (!TryRowBounds(p, out int frTop, out int frH)) continue;  // pomiń, gdy koniec poza ekranem
 
-                float fromX = GanttMetrics.DateToX(pred.Finish.Value, _projectStart, PixelsPerDay) - _scrollOffsetX;
-                float fromY = GanttMetrics.RowY(predIndex, FirstVisibleRow, RowHeight, HeaderHeight) + RowHeight / 2f;
-                float toX = GanttMetrics.DateToX(task.Start.Value, _projectStart, PixelsPerDay) - _scrollOffsetX;
-                float toY = GanttMetrics.RowY(i, FirstVisibleRow, RowHeight, HeaderHeight) + RowHeight / 2f;
+                float fromX = DateToX(pred.Finish.Value);
+                float fromY = frTop + frH / 2f;
+                float toX = DateToX(task.Start.Value);
+                float toY = toTop + toH / 2f;
 
-                g.DrawLine(pen, fromX, fromY, toX, toY);
+                // Łamana pod kątem prostym (Finish-to-Start): wyjście w prawo,
+                // pion do wiersza następnika, wejście w jego start.
+                const float stub = 10f;
+                var pts = new[]
+                {
+                    new PointF(fromX, fromY),
+                    new PointF(fromX + stub, fromY),
+                    new PointF(fromX + stub, toY),
+                    new PointF(toX, toY)
+                };
+                g.DrawLines(pen, pts);
             }
         }
+
+        g.SmoothingMode = oldMode;
     }
 }

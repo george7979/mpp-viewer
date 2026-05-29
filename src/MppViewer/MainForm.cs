@@ -23,7 +23,8 @@ public class MainForm : Form
         BuildStatusBar();
         BuildLayout();
 
-        _grid.Scroll += OnGridScroll;
+        // Wykres odczytuje geometrię wierszy z tabeli i sam nasłuchuje jej przewijania.
+        _gantt.AttachGrid(_grid);
     }
 
     private void BuildMenu()
@@ -108,16 +109,6 @@ public class MainForm : Form
         finally
         {
             Cursor = Cursors.Default;
-        }
-    }
-
-    private void OnGridScroll(object? sender, ScrollEventArgs e)
-    {
-        if (e.ScrollOrientation == ScrollOrientation.VerticalScroll)
-        {
-            int idx = _grid.FirstDisplayedScrollingRowIndex;
-            _gantt.FirstVisibleRow = idx >= 0 ? idx : 0;
-            _gantt.Invalidate();
         }
     }
 }

@@ -14,6 +14,10 @@ public class TaskGridView : DataGridView
         SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         MultiSelect = false;
         AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+        // Wysokość nagłówka zrównana z wykresem, by wiersze tabeli i paski Gantta
+        // startowały na tym samym Y (GanttControl odczytuje pozycje wierszy stąd).
+        ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+        ColumnHeadersHeight = GanttControl.HeaderHeight;
         typeof(DataGridView)
             .GetProperty("DoubleBuffered", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .SetValue(this, true);
