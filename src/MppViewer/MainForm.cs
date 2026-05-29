@@ -34,13 +34,16 @@ public class MainForm : Form
         using (var iconStream = GetType().Assembly.GetManifestResourceStream("app.ico"))
             if (iconStream != null) Icon = new System.Drawing.Icon(iconStream);
 
+        // KeyPreview pozwala formularzowi przechwycić Ctrl+O zanim trafi do kontrolki
+        // (skrót przeszedł tu z dawnej pozycji menu po usunięciu paska menu).
+        KeyPreview = true;
+
         // Kolejność dodawania determinuje dokowanie: kontrolka Dock.Fill musi trafić
-        // do Controls jako pierwsza (najniższy z-order), aby menu (Top) i status (Bottom)
-        // najpierw zarezerwowały swoje krawędzie, zamiast zostać przykryte przez Fill.
+        // do Controls jako pierwsza (najniższy z-order), aby pasek narzędzi (Top) i status
+        // (Bottom) zarezerwowały swoje krawędzie, zamiast zostać przykryte przez Fill.
         BuildLayout();
         BuildStatusBar();
-        BuildToolbar();
-        BuildMenu();   // dodawane ostatnie → dokowane najpierw → zostaje na samej górze
+        BuildToolbar();   // jedyna kontrolka dokowana na górze (brak paska menu)
 
         // Wykres odczytuje geometrię wierszy z tabeli i sam nasłuchuje jej przewijania.
         _gantt.AttachGrid(_grid);
@@ -99,24 +102,15 @@ public class MainForm : Form
             await LoadFileAsync(_startupFile);
     }
 
-    private void BuildMenu()
+    protected override void OnKeyDown(KeyEventArgs e)
     {
-        // Pozycje najwyższego poziomu bez rodzica "File": klik = akcja od razu
-        // (ToolStripMenuItem bez DropDownItems odpala Click zamiast rozwijać menu).
-        var menuStrip = new MenuStrip();
-        var openItem = new ToolStripMenuItem("Open...", null, OnOpenClick) { ShortcutKeys = Keys.Control | Keys.O };
-        var exitItem = new ToolStripMenuItem("Exit", null, (_, __) => Close());
-        // Link do repozytorium — wyrównany do prawej, by nie mieszał się z akcjami.
-        var githubItem = new ToolStripMenuItem("GitHub", null, (_, __) => OpenUrl(RepoUrl))
+        base.OnKeyDown(e);
+        // Ctrl+O = otwórz plik (skrót przeniesiony z dawnego menu).
+        if (e.Control && e.KeyCode == Keys.O)
         {
-            Alignment = ToolStripItemAlignment.Right
-        };
-
-        menuStrip.Items.Add(openItem);
-        menuStrip.Items.Add(exitItem);
-        menuStrip.Items.Add(githubItem);
-        Controls.Add(menuStrip);
-        MainMenuStrip = menuStrip;
+            OnOpenClick(this, EventArgs.Empty);
+            e.Handled = true;
+        }
     }
 
     private static void OpenUrl(string url)
@@ -130,11 +124,15 @@ public class MainForm : Form
     {
         _toolbar.GripStyle = ToolStripGripStyle.Hidden;
 
-        // Dopasuj oś czasu wykresu do szerokości okna (odpowiednik "Entire Project").
-        var fitButton = new ToolStripButton("Fit to width")
-        {
-            DisplayStyle = ToolStripItemDisplayStyle.Text
-        };
+        // Lewa strona: plik | widok (zoom) | filtr.
+        var openButton = new ToolStripButton("Open…") { DisplayStyle = ToolStripItemDisplayStyle.Text };
+        openButton.Click += OnOpenClick;
+
+        var zoomOutButton = new ToolStripButton("Zoom −") { DisplayStyle = ToolStripItemDisplayStyle.Text };
+        zoomOutButton.Click += (_, __) => _gantt.ZoomOut();
+        var zoomInButton = new ToolStripButton("Zoom +") { DisplayStyle = ToolStripItemDisplayStyle.Text };
+        zoomInButton.Click += (_, __) => _gantt.ZoomIn();
+        var fitButton = new ToolStripButton("Fit to width") { DisplayStyle = ToolStripItemDisplayStyle.Text };
         fitButton.Click += (_, __) => _gantt.ZoomToFit();
 
         _resourceCombo.DropDownStyle = ComboBoxStyle.DropDownList;  // tylko wybór z listy, bez wpisywania
@@ -142,11 +140,42 @@ public class MainForm : Form
         _resourceCombo.Width = 220;
         _resourceCombo.SelectedIndexChanged += OnResourceFilterChanged;
 
+        // Prawa strona (Alignment.Right): pierwszy dodany ląduje najbardziej z prawej,
+        // więc dodajemy Exit, GitHub, About → wizualnie od lewej: About | GitHub | Exit.
+        var exitButton = new ToolStripButton("Exit")
+        { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
+        exitButton.Click += (_, __) => Close();
+        var githubButton = new ToolStripButton("GitHub")
+        { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
+        githubButton.Click += (_, __) => OpenUrl(RepoUrl);
+        var aboutButton = new ToolStripButton("About")
+        { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
+        aboutButton.Click += (_, __) => ShowAbout();
+
+        _toolbar.Items.Add(openButton);
+        _toolbar.Items.Add(new ToolStripSeparator());
+        _toolbar.Items.Add(zoomOutButton);
+        _toolbar.Items.Add(zoomInButton);
         _toolbar.Items.Add(fitButton);
         _toolbar.Items.Add(new ToolStripSeparator());
         _toolbar.Items.Add(new ToolStripLabel("Show assigned to:"));
         _toolbar.Items.Add(_resourceCombo);
+        _toolbar.Items.Add(exitButton);
+        _toolbar.Items.Add(githubButton);
+        _toolbar.Items.Add(aboutButton);
         Controls.Add(_toolbar);
+    }
+
+    private void ShowAbout()
+    {
+        var v = GetType().Assembly.GetName().Version;
+        string version = v is null ? "" : $" v{v.Major}.{v.Minor}.{v.Build}";
+        MessageBox.Show(
+            $"MPP Viewer{version}\n\n" +
+            "A portable, read-only viewer for Microsoft Project (.mpp) files.\n\n" +
+            "MIT License\n" +
+            RepoUrl,
+            "About MPP Viewer", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private void OnResourceFilterChanged(object? sender, EventArgs e)
