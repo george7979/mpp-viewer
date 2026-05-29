@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue)
 ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
 
-> **Early version (1.1.3)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
+> **Early version (1.1.4)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
 
 A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It shows the task list and a synchronized Gantt chart side by side — no Microsoft Project installation required.
 
@@ -53,7 +53,7 @@ The app then starts normally, and Windows remembers your choice for that file. (
 
 ## Usage
 
-1. Click **Open…** (or press `Ctrl+O`) and pick a `.mpp` file. Columns auto-fit and the chart snaps to the right of the table.
+1. Click **Open…** (or press `Ctrl+O`) and pick a `.mpp` file — or double-click an `.mpp` file in Explorer once you've opened it with MPP Viewer / set it as the default app. Columns auto-fit and the chart snaps to the right of the table.
 2. Scroll the table vertically — the chart follows. Use the chart's bottom scrollbar to pan the timeline; the mouse wheel over the chart scrolls both panes.
 3. **Drag the chart to pan it** — grab the Gantt area with the mouse (or swipe with a finger on a touchscreen) and drag in any direction: left/right scrolls the timeline, up/down scrolls the rows.
 4. **Double-click a row** to scroll the timeline to that task.
