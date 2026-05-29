@@ -8,6 +8,11 @@
     <AssemblyName>MppViewer</AssemblyName>
     <RootNamespace>MppViewer</RootNamespace>
     <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Product>MPP Viewer</Product>
+    <Company>george7979</Company>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="net.sf.mpxj" Version="13.*" />
