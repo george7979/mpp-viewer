@@ -1,10 +1,116 @@
+using MppViewer.Controls;
+using MppViewer.Services;
+
 namespace MppViewer;
 
 public class MainForm : Form
 {
+    private readonly TaskGridView _grid = new();
+    private readonly GanttControl _gantt = new();
+    private readonly SplitContainer _split = new();
+    private readonly StatusStrip _status = new();
+    private readonly ToolStripStatusLabel _statusFile = new() { Text = "Brak pliku" };
+    private readonly ToolStripStatusLabel _statusCount = new();
+    private readonly ToolStripStatusLabel _statusRange = new();
+
     public MainForm()
     {
         Text = "MPP Viewer";
-        Size = new System.Drawing.Size(1200, 700);
+        Size = new System.Drawing.Size(1280, 720);
+        MinimumSize = new System.Drawing.Size(800, 500);
+
+        BuildMenu();
+        BuildStatusBar();
+        BuildLayout();
+
+        _grid.Scroll += OnGridScroll;
+    }
+
+    private void BuildMenu()
+    {
+        var menuStrip = new MenuStrip();
+        var fileMenu = new ToolStripMenuItem("Plik");
+        var openItem = new ToolStripMenuItem("Otwórz...", null, OnOpenClick) { ShortcutKeys = Keys.Control | Keys.O };
+        var exitItem = new ToolStripMenuItem("Wyjście", null, (_, __) => Close());
+
+        fileMenu.DropDownItems.Add(openItem);
+        fileMenu.DropDownItems.Add(new ToolStripSeparator());
+        fileMenu.DropDownItems.Add(exitItem);
+        menuStrip.Items.Add(fileMenu);
+        Controls.Add(menuStrip);
+        MainMenuStrip = menuStrip;
+    }
+
+    private void BuildStatusBar()
+    {
+        _statusFile.BorderSides = ToolStripStatusLabelBorderSides.Right;
+        _statusCount.BorderSides = ToolStripStatusLabelBorderSides.Right;
+        _status.Items.AddRange(new ToolStripItem[] { _statusFile, _statusCount, _statusRange });
+        Controls.Add(_status);
+    }
+
+    private void BuildLayout()
+    {
+        _split.Dock = DockStyle.Fill;
+        _split.Orientation = Orientation.Vertical;
+        _split.SplitterDistance = 480;
+
+        _grid.Dock = DockStyle.Fill;
+        _gantt.Dock = DockStyle.Fill;
+
+        _split.Panel1.Controls.Add(_grid);
+        _split.Panel2.Controls.Add(_gantt);
+        Controls.Add(_split);
+    }
+
+    private async void OnOpenClick(object? sender, EventArgs e)
+    {
+        using var dlg = new OpenFileDialog
+        {
+            Title = "Otwórz plik MS Project",
+            Filter = "MS Project (*.mpp)|*.mpp|Wszystkie pliki (*.*)|*.*",
+            FilterIndex = 1
+        };
+        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+        await LoadFileAsync(dlg.FileName);
+    }
+
+    private async Task LoadFileAsync(string path)
+    {
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            var data = await Task.Run(() => MppReader.Read(path));
+
+            _grid.LoadTasks(data.Tasks);
+            _gantt.Load(data.Tasks, data.ProjectStart, data.ProjectFinish);
+
+            _statusFile.Text = System.IO.Path.GetFileName(path);
+            _statusCount.Text = $"{data.Tasks.Count} zadań";
+            _statusRange.Text = $"{data.ProjectStart:dd.MM.yyyy} – {data.ProjectFinish:dd.MM.yyyy}";
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show($"Nie można otworzyć pliku:\n{ex.Message}", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        catch (Exception)
+        {
+            MessageBox.Show("Nie można odczytać pliku. Upewnij się, że jest to prawidłowy plik MS Project (.mpp).",
+                "Błąd odczytu", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+    }
+
+    private void OnGridScroll(object? sender, ScrollEventArgs e)
+    {
+        if (e.ScrollOrientation == ScrollOrientation.VerticalScroll)
+        {
+            _gantt.FirstVisibleRow = _grid.FirstDisplayedScrollingRowIndex;
+            _gantt.Invalidate();
+        }
     }
 }
