@@ -146,6 +146,9 @@ public class MainForm : Form
     {
         _split.Dock = DockStyle.Fill;
         _split.Orientation = Orientation.Vertical;
+        // Przy zmianie rozmiaru okna tabela trzyma szerokość, a nadmiar pochłania wykres
+        // (inaczej Fill-owa ostatnia kolumna rosłaby wraz z oknem).
+        _split.FixedPanel = FixedPanel.Panel1;
 
         _grid.Dock = DockStyle.Fill;
         _gantt.Dock = DockStyle.Fill;
