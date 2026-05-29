@@ -8,12 +8,14 @@ public static class MppReader
 {
     public static ProjectData Read(string filePath)
     {
-        var projectFile = new UniversalProjectReader().read(filePath);
+        var projectFile = new UniversalProjectReader().read(filePath)
+            ?? throw new InvalidDataException($"UniversalProjectReader returned null for '{filePath}'. The file may be an unsupported format.");
         var rawTasks = projectFile.getTasks();
 
         var tasks = new List<TaskItem>();
-        foreach (net.sf.mpxj.Task task in rawTasks)
+        foreach (var obj in rawTasks.toArray())
         {
+            if (obj is not net.sf.mpxj.Task task) continue;
             if (string.IsNullOrEmpty(task.getName())) continue;
 
             tasks.Add(new TaskItem(
@@ -47,12 +49,9 @@ public static class MppReader
     {
         if (d == null) return null;
         return new DateTime(
-            d.getYear(),
-            d.getMonthValue(),
-            d.getDayOfMonth(),
-            d.getHour(),
-            d.getMinute(),
-            d.getSecond());
+            d.getYear(), d.getMonthValue(), d.getDayOfMonth(),
+            d.getHour(), d.getMinute(), d.getSecond(),
+            DateTimeKind.Unspecified);  // MPP stores schedule dates, not instants
     }
 
     private static TimeSpan ToDuration(Duration? dur)
@@ -64,6 +63,8 @@ public static class MppReader
             return TimeSpan.FromHours(value);
         if (units == TimeUnit.MINUTES)
             return TimeSpan.FromMinutes(value);
+        if (units == TimeUnit.WEEKS) return TimeSpan.FromDays(value * 7);
+        if (units == TimeUnit.MONTHS) return TimeSpan.FromDays(value * 30.44);
         return TimeSpan.FromDays(value);
     }
 
@@ -81,7 +82,8 @@ public static class MppReader
             if (obj is Relation rel)
             {
                 var id = rel.getPredecessorTask()?.getID()?.intValue();
-                if (id.HasValue) ids.Add(id.Value);
+                if (id.HasValue && id.Value != task.getID()?.intValue())
+                    ids.Add(id.Value);
             }
         }
         return ids;
