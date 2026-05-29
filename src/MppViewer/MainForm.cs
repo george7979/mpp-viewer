@@ -39,6 +39,18 @@ public class MainForm : Form
         _grid.CellDoubleClick += OnRowDoubleClick;
     }
 
+    /// <summary>
+    /// Dosuwa wykres do tabeli: ustawia splitter tuż za kolumnami (po ich auto-dopasowaniu
+    /// do treści), z zapasem na pionowy pasek przewijania tabeli, by nie pojawił się poziomy.
+    /// </summary>
+    private void FitSplitterToColumns()
+    {
+        int columns = _grid.Columns.GetColumnsWidth(DataGridViewElementStates.Visible);
+        int needed = columns + SystemInformation.VerticalScrollBarWidth + 3;  // pasek pionowy + obramowanie
+        int max = _split.Width - _split.Panel2MinSize - _split.SplitterWidth;
+        _split.SplitterDistance = Math.Clamp(needed, _split.Panel1MinSize, Math.Max(_split.Panel1MinSize, max));
+    }
+
     private void OnRowDoubleClick(object? sender, DataGridViewCellEventArgs e)
     {
         if (e.RowIndex < 0) return;  // nagłówek
@@ -157,6 +169,7 @@ public class MainForm : Form
             _grid.LoadTasks(data.Tasks);
             _gantt.Load(data.Tasks, data.ProjectStart, data.ProjectFinish);
             PopulateResourceFilter(data.Tasks);
+            FitSplitterToColumns();
 
             _statusFile.Text = System.IO.Path.GetFileName(path);
             _statusCount.Text = $"{data.Tasks.Count} zadań";
