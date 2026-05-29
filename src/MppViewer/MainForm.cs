@@ -129,11 +129,21 @@ public class MainForm : Form
     private void BuildToolbar()
     {
         _toolbar.GripStyle = ToolStripGripStyle.Hidden;
+
+        // Dopasuj oś czasu wykresu do szerokości okna (odpowiednik "Entire Project").
+        var fitButton = new ToolStripButton("Fit to width")
+        {
+            DisplayStyle = ToolStripItemDisplayStyle.Text
+        };
+        fitButton.Click += (_, __) => _gantt.ZoomToFit();
+
         _resourceCombo.DropDownStyle = ComboBoxStyle.DropDownList;  // tylko wybór z listy, bez wpisywania
         _resourceCombo.AutoSize = false;
         _resourceCombo.Width = 220;
         _resourceCombo.SelectedIndexChanged += OnResourceFilterChanged;
 
+        _toolbar.Items.Add(fitButton);
+        _toolbar.Items.Add(new ToolStripSeparator());
         _toolbar.Items.Add(new ToolStripLabel("Show assigned to:"));
         _toolbar.Items.Add(_resourceCombo);
         Controls.Add(_toolbar);
