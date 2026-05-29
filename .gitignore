@@ -27,3 +27,7 @@ bld/
 ## OS
 .DS_Store
 Thumbs.db
+
+## Publish & test output
+publish/
+TestResults/
