@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MppViewer.Controls;
 using MppViewer.Models;
 using MppViewer.Services;
@@ -7,6 +8,7 @@ namespace MppViewer;
 public class MainForm : Form
 {
     private const string AllResources = "(everyone)";
+    private const string RepoUrl = "https://github.com/george7979/mpp-viewer";
 
     private readonly TaskGridView _grid = new();
     private readonly GanttControl _gantt = new();
@@ -17,6 +19,7 @@ public class MainForm : Form
     private readonly ToolStripStatusLabel _statusFile = new() { Text = "No file" };
     private readonly ToolStripStatusLabel _statusCount = new();
     private readonly ToolStripStatusLabel _statusRange = new();
+    private readonly ToolStripStatusLabel _statusVersion = new();
 
     public MainForm()
     {
@@ -83,17 +86,29 @@ public class MainForm : Form
 
     private void BuildMenu()
     {
+        // Pozycje najwyższego poziomu bez rodzica "File": klik = akcja od razu
+        // (ToolStripMenuItem bez DropDownItems odpala Click zamiast rozwijać menu).
         var menuStrip = new MenuStrip();
-        var fileMenu = new ToolStripMenuItem("File");
         var openItem = new ToolStripMenuItem("Open...", null, OnOpenClick) { ShortcutKeys = Keys.Control | Keys.O };
         var exitItem = new ToolStripMenuItem("Exit", null, (_, __) => Close());
+        // Link do repozytorium — wyrównany do prawej, by nie mieszał się z akcjami.
+        var githubItem = new ToolStripMenuItem("GitHub", null, (_, __) => OpenUrl(RepoUrl))
+        {
+            Alignment = ToolStripItemAlignment.Right
+        };
 
-        fileMenu.DropDownItems.Add(openItem);
-        fileMenu.DropDownItems.Add(new ToolStripSeparator());
-        fileMenu.DropDownItems.Add(exitItem);
-        menuStrip.Items.Add(fileMenu);
+        menuStrip.Items.Add(openItem);
+        menuStrip.Items.Add(exitItem);
+        menuStrip.Items.Add(githubItem);
         Controls.Add(menuStrip);
         MainMenuStrip = menuStrip;
+    }
+
+    private static void OpenUrl(string url)
+    {
+        // UseShellExecute=true → otwiera w domyślnej przeglądarce systemowej.
+        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+        catch { /* brak skojarzonej przeglądarki — pomiń po cichu */ }
     }
 
     private void BuildToolbar()
@@ -138,7 +153,13 @@ public class MainForm : Form
     {
         _statusFile.BorderSides = ToolStripStatusLabelBorderSides.Right;
         _statusCount.BorderSides = ToolStripStatusLabelBorderSides.Right;
-        _status.Items.AddRange(new ToolStripItem[] { _statusFile, _statusCount, _statusRange });
+
+        // Wersja czytana z assembly (zawsze zgodna z buildem), w stopce po prawej.
+        var v = GetType().Assembly.GetName().Version;
+        _statusVersion.Text = v is null ? "" : $"v{v.Major}.{v.Minor}.{v.Build}";
+        _statusVersion.Alignment = ToolStripItemAlignment.Right;
+
+        _status.Items.AddRange(new ToolStripItem[] { _statusFile, _statusCount, _statusRange, _statusVersion });
         Controls.Add(_status);
     }
 
