@@ -42,7 +42,7 @@ public class GanttControl : Panel
                              .ToDictionary(x => x.Id, x => x.i);
 
         int totalWidth = GanttMetrics.TotalWidth(start, end, PixelsPerDay);
-        _hScroll.Maximum = Math.Max(0, totalWidth);
+        _hScroll.Maximum = Math.Max(0, totalWidth + _hScroll.LargeChange - 1);
         _hScroll.Value = 0;
         _scrollOffsetX = 0;
         Invalidate();
@@ -72,7 +72,6 @@ public class GanttControl : Panel
         if (_tasks.Count == 0) return;
 
         using var monthFont = new Font(Font.FontFamily, 8f, FontStyle.Bold);
-        using var dayFont = new Font(Font.FontFamily, 7f);
 
         var current = new DateTime(_projectStart.Year, _projectStart.Month, 1);
         while (current <= _projectEnd)
@@ -125,8 +124,9 @@ public class GanttControl : Panel
         using var pen = new Pen(Color.DarkRed, 1f);
         pen.EndCap = LineCap.ArrowAnchor;
 
-        foreach (var task in _tasks)
+        for (int i = 0; i < _tasks.Count; i++)
         {
+            var task = _tasks[i];
             if (task.Start == null) continue;
             foreach (var predId in task.PredecessorIds)
             {
@@ -134,11 +134,10 @@ public class GanttControl : Panel
                 var pred = _tasks[predIndex];
                 if (pred.Finish == null) continue;
 
-                int taskIndex = _taskRowIndex[task.Id];
                 float fromX = GanttMetrics.DateToX(pred.Finish.Value, _projectStart, PixelsPerDay) - _scrollOffsetX;
                 float fromY = GanttMetrics.RowY(predIndex, FirstVisibleRow, RowHeight, HeaderHeight) + RowHeight / 2f;
                 float toX = GanttMetrics.DateToX(task.Start.Value, _projectStart, PixelsPerDay) - _scrollOffsetX;
-                float toY = GanttMetrics.RowY(taskIndex, FirstVisibleRow, RowHeight, HeaderHeight) + RowHeight / 2f;
+                float toY = GanttMetrics.RowY(i, FirstVisibleRow, RowHeight, HeaderHeight) + RowHeight / 2f;
 
                 g.DrawLine(pen, fromX, fromY, toX, toY);
             }
