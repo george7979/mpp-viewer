@@ -130,9 +130,6 @@ public class GanttControl : Panel
         return true;
     }
 
-    private static bool IsSummary(IReadOnlyList<TaskItem> tasks, int i)
-        => i + 1 < tasks.Count && tasks[i + 1].OutlineLevel > tasks[i].OutlineLevel;
-
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
@@ -205,7 +202,7 @@ public class GanttControl : Panel
         for (int i = 0; i < _tasks.Count; i++)
         {
             if (!TryRowBounds(i, out int top, out int height)) continue;
-            DrawTaskBar(g, _tasks[i], top, height, IsSummary(_tasks, i));
+            DrawTaskBar(g, _tasks[i], top, height, _tasks[i].IsSummary);
         }
     }
 

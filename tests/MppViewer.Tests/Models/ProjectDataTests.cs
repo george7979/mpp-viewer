@@ -11,6 +11,7 @@ public class ProjectDataTests
             Id: 1,
             Name: "Design",
             OutlineLevel: 1,
+            IsSummary: true,
             Start: new DateTime(2025, 1, 6),
             Finish: new DateTime(2025, 1, 10),
             Duration: TimeSpan.FromDays(5),
@@ -28,6 +29,7 @@ public class ProjectDataTests
         Assert.Equal(TimeSpan.FromDays(5), task.Duration);
         Assert.Empty(task.PredecessorIds);
         Assert.Equal(new[] { "Jan Kowalski", "Anna Nowak" }, task.ResourceNames);
+        Assert.True(task.IsSummary);
     }
 
     [Fact]
@@ -35,7 +37,7 @@ public class ProjectDataTests
     {
         var tasks = new[]
         {
-            new TaskItem(1, "Task A", 1, null, null, TimeSpan.Zero, 0, Array.Empty<int>(), Array.Empty<string>()),
+            new TaskItem(1, "Task A", 1, false, null, null, TimeSpan.Zero, 0, Array.Empty<int>(), Array.Empty<string>()),
         };
         var project = new ProjectData(
             FilePath: "test.mpp",

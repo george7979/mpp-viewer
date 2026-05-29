@@ -4,8 +4,13 @@ namespace MppViewer.Controls;
 
 public class TaskGridView : DataGridView
 {
+    private readonly Font _summaryFont;
+
     public TaskGridView()
     {
+        // Pogrubiona odmiana czcionki tabeli dla zadań sumarycznych (rodziców).
+        _summaryFont = new Font(Font, FontStyle.Bold);
+
         ReadOnly = true;
         AllowUserToAddRows = false;
         AllowUserToDeleteRows = false;
@@ -63,7 +68,7 @@ public class TaskGridView : DataGridView
             string indent = new string(' ', task.OutlineLevel * 3);
             string durationText = FormatDuration(task.Duration);
 
-            Rows.Add(
+            int rowIndex = Rows.Add(
                 task.Id,
                 indent + task.Name,
                 durationText,
@@ -72,6 +77,10 @@ public class TaskGridView : DataGridView
                 $"{task.PercentComplete}%",
                 string.Join("; ", task.ResourceNames)
             );
+
+            // Wyróżnij poziomy struktury (PROJEKT/ETAP/...) pogrubieniem.
+            if (task.IsSummary)
+                Rows[rowIndex].DefaultCellStyle.Font = _summaryFont;
         }
     }
 

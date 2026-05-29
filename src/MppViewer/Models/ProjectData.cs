@@ -11,6 +11,7 @@ public record TaskItem(
     int Id,
     string Name,
     int OutlineLevel,
+    bool IsSummary,
     DateTime? Start,
     DateTime? Finish,
     TimeSpan Duration,

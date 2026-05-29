@@ -22,6 +22,7 @@ public static class MppReader
                 Id: task.getID()?.intValue() ?? 0,
                 Name: task.getName()!,
                 OutlineLevel: task.getOutlineLevel()?.intValue() ?? 0,
+                IsSummary: task.getSummary(),
                 Start: ToDateTime(task.getStart()),
                 Finish: ToDateTime(task.getFinish()),
                 Duration: ToDuration(task.getDuration()),
