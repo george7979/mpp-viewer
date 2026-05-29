@@ -20,9 +20,12 @@ public class MainForm : Form
     private readonly ToolStripStatusLabel _statusCount = new();
     private readonly ToolStripStatusLabel _statusRange = new();
     private readonly ToolStripStatusLabel _statusVersion = new();
+    private readonly string? _startupFile;
 
-    public MainForm()
+    public MainForm(string? startupFile = null)
     {
+        _startupFile = startupFile;
+
         Text = "MPP Viewer";
         Size = new System.Drawing.Size(1280, 720);
         MinimumSize = new System.Drawing.Size(800, 500);
@@ -86,6 +89,14 @@ public class MainForm : Form
         // dosuwa wykres do faktycznej szerokości kolumn.
         int max = _split.Width - _split.Panel2MinSize - _split.SplitterWidth;
         _split.SplitterDistance = Math.Clamp(780, _split.Panel1MinSize, Math.Max(_split.Panel1MinSize, max));
+    }
+
+    protected override async void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+        // Plik przekazany z "Otwórz za pomocą" / skojarzenia — załaduj po pokazaniu okna.
+        if (_startupFile != null && System.IO.File.Exists(_startupFile))
+            await LoadFileAsync(_startupFile);
     }
 
     private void BuildMenu()
