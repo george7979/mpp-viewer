@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue)
 ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
 
-> **Early version (1.1.0)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
+> **Early version (1.1.1)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
 
 A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It shows the task list and a synchronized Gantt chart side by side — no Microsoft Project installation required.
 
@@ -53,13 +53,13 @@ The app then starts normally, and Windows remembers your choice for that file. (
 
 ## Usage
 
-1. **File → Open…** (or `Ctrl+O`) and pick a `.mpp` file. Columns auto-fit and the chart snaps to the right of the table.
+1. Click **Open…** (or press `Ctrl+O`) and pick a `.mpp` file. Columns auto-fit and the chart snaps to the right of the table.
 2. Scroll the table vertically — the chart follows. Use the chart's bottom scrollbar to pan the timeline; the mouse wheel over the chart scrolls both panes.
 3. **Double-click a row** to scroll the timeline to that task.
 4. Use **Show assigned to:** at the top to highlight one person's tasks (others are greyed out); pick *(everyone)* to show everyone again.
 5. Drag the splitter between the panes to resize them.
 
-The status bar shows the file name, task count, and the project's date range.
+The status bar shows the file name, task count, the project's date range, and the app version (bottom-right). The **GitHub** menu item opens this repository.
 
 ## What it does not do (yet)
 
