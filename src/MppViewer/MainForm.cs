@@ -34,16 +34,13 @@ public class MainForm : Form
         using (var iconStream = GetType().Assembly.GetManifestResourceStream("app.ico"))
             if (iconStream != null) Icon = new System.Drawing.Icon(iconStream);
 
-        // KeyPreview pozwala formularzowi przechwycić Ctrl+O zanim trafi do kontrolki
-        // (skrót przeszedł tu z dawnej pozycji menu po usunięciu paska menu).
-        KeyPreview = true;
-
         // Kolejność dodawania determinuje dokowanie: kontrolka Dock.Fill musi trafić
-        // do Controls jako pierwsza (najniższy z-order), aby pasek narzędzi (Top) i status
-        // (Bottom) zarezerwowały swoje krawędzie, zamiast zostać przykryte przez Fill.
+        // do Controls jako pierwsza (najniższy z-order), aby menu (Top), pasek narzędzi (Top)
+        // i status (Bottom) zarezerwowały swoje krawędzie, zamiast zostać przykryte przez Fill.
         BuildLayout();
         BuildStatusBar();
-        BuildToolbar();   // jedyna kontrolka dokowana na górze (brak paska menu)
+        BuildToolbar();
+        BuildMenu();   // dodawane ostatnie → dokowane najpierw → na samej górze, nad paskiem
 
         // Wykres odczytuje geometrię wierszy z tabeli i sam nasłuchuje jej przewijania.
         _gantt.AttachGrid(_grid);
@@ -102,15 +99,25 @@ public class MainForm : Form
             await LoadFileAsync(_startupFile);
     }
 
-    protected override void OnKeyDown(KeyEventArgs e)
+    private void BuildMenu()
     {
-        base.OnKeyDown(e);
-        // Ctrl+O = otwórz plik (skrót przeniesiony z dawnego menu).
-        if (e.Control && e.KeyCode == Keys.O)
-        {
-            OnOpenClick(this, EventArgs.Empty);
-            e.Handled = true;
-        }
+        // Klasyczny pasek menu: File (operacje pliku/aplikacji) + Help (informacje).
+        // Częste akcje widoku (zoom/fit) i filtr żyją na pasku narzędzi, nie w menu.
+        var menu = new MenuStrip();
+
+        var fileMenu = new ToolStripMenuItem("&File");
+        fileMenu.DropDownItems.Add(new ToolStripMenuItem("Open…", null, OnOpenClick) { ShortcutKeys = Keys.Control | Keys.O });
+        fileMenu.DropDownItems.Add(new ToolStripSeparator());
+        fileMenu.DropDownItems.Add(new ToolStripMenuItem("Exit", null, (_, __) => Close()));
+
+        var helpMenu = new ToolStripMenuItem("&Help");
+        helpMenu.DropDownItems.Add(new ToolStripMenuItem("About", null, (_, __) => ShowAbout()));
+        helpMenu.DropDownItems.Add(new ToolStripMenuItem("GitHub", null, (_, __) => OpenUrl(RepoUrl)));
+
+        menu.Items.Add(fileMenu);
+        menu.Items.Add(helpMenu);
+        Controls.Add(menu);
+        MainMenuStrip = menu;
     }
 
     private static void OpenUrl(string url)
@@ -130,24 +137,15 @@ public class MainForm : Form
         _toolbar.Height = 38;
         _toolbar.Font = new System.Drawing.Font("Segoe UI", 10f);
 
-        // Lewa strona: Open | filtr osób | Exit.
-        var openButton = new ToolStripButton("Open…") { DisplayStyle = ToolStripItemDisplayStyle.Text };
-        openButton.Click += OnOpenClick;
-
+        // Pasek = tylko widok: filtr osób (lewo) + zoom/fit (prawo, przy wykresie).
+        // Open/Exit są w menu File, About/GitHub w menu Help — bez duplikatów na pasku.
         _resourceCombo.DropDownStyle = ComboBoxStyle.DropDownList;  // tylko wybór z listy, bez wpisywania
         _resourceCombo.AutoSize = false;
         _resourceCombo.Width = 220;
         _resourceCombo.SelectedIndexChanged += OnResourceFilterChanged;
 
-        var exitButton = new ToolStripButton("Exit") { DisplayStyle = ToolStripItemDisplayStyle.Text };
-        exitButton.Click += (_, __) => Close();
-
-        // Prawa strona (Alignment.Right): sekcja widoku (zoom/fit) tuż przy wykresie + About.
-        // Pierwszy dodany element wyrównany do prawej ląduje najbardziej z prawej, więc dodajemy
-        // About, separator, Fit, Zoom +, Zoom − → wizualnie: Zoom − Zoom + Fit │ About.
-        var aboutButton = new ToolStripButton("About")
-        { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
-        aboutButton.Click += (_, __) => ShowAbout();
+        // Prawa strona (Alignment.Right): pierwszy dodany do prawej ląduje najbardziej z prawej,
+        // więc dodajemy Fit, Zoom +, Zoom − → wizualnie: Zoom − Zoom + Fit.
         var fitButton = new ToolStripButton("Fit to width")
         { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
         fitButton.Click += (_, __) => _gantt.ZoomToFit();
@@ -158,15 +156,9 @@ public class MainForm : Form
         { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
         zoomOutButton.Click += (_, __) => _gantt.ZoomOut();
 
-        _toolbar.Items.Add(openButton);
-        _toolbar.Items.Add(new ToolStripSeparator());
         _toolbar.Items.Add(new ToolStripLabel("Show assigned to:"));
         _toolbar.Items.Add(_resourceCombo);
-        _toolbar.Items.Add(new ToolStripSeparator());
-        _toolbar.Items.Add(exitButton);
         // Wyrównane do prawej (kolejność dodawania → od prawej krawędzi):
-        _toolbar.Items.Add(aboutButton);
-        _toolbar.Items.Add(new ToolStripSeparator { Alignment = ToolStripItemAlignment.Right });
         _toolbar.Items.Add(fitButton);
         _toolbar.Items.Add(zoomInButton);
         _toolbar.Items.Add(zoomOutButton);
