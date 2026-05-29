@@ -110,4 +110,12 @@ dotnet publish src/MppViewer/MppViewer.csproj -c Release -r win-x64 \
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MPP Viewer's own source code is licensed under the **MIT License** — see [LICENSE](LICENSE).
+
+### Third-party software
+
+This app bundles **[MPXJ](https://www.mpxj.org/)** (by Jon Iles) to read Microsoft Project files. MPXJ is licensed under the **LGPL-2.1-or-later**. Because MPP Viewer ships as a self-contained executable that bundles MPXJ, the LGPL applies to that component: the full source and [build instructions](#building-from-source) are provided here, so you can rebuild the app with a modified or different version of MPXJ. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for details.
+
+### Trademarks
+
+Not affiliated with or endorsed by Microsoft. *Microsoft Project*, *MS Project*, and related names are trademarks of Microsoft Corporation. MPP Viewer is an independent, third-party tool that reads the `.mpp` file format for interoperability.
