@@ -15,6 +15,7 @@ public class GanttControl : Panel
     /// <summary>Wspólna wysokość nagłówka — tabela ustawia ColumnHeadersHeight na tę samą wartość.</summary>
     public const int HeaderHeight = 44;
     private const float PixelsPerDay = 15f;
+    private const float ScrollLeftMargin = 12f;  // odstęp paska od lewej krawędzi po przewinięciu
 
     private IReadOnlyList<TaskItem> _tasks = Array.Empty<TaskItem>();
     private DateTime _projectStart;
@@ -66,6 +67,22 @@ public class GanttControl : Panel
 
     private bool IsDimmed(TaskItem task)
         => _highlightResource != null && !task.ResourceNames.Contains(_highlightResource);
+
+    /// <summary>
+    /// Przewija oś czasu poziomo tak, by podana data znalazła się przy lewej
+    /// krawędzi wykresu (z małym marginesem). Zmienia tylko kamerę — nie model.
+    /// </summary>
+    public void ScrollToDate(DateTime date)
+    {
+        float absX = GanttMetrics.DateToX(date, _projectStart, PixelsPerDay);
+        int target = (int)Math.Round(absX - ScrollLeftMargin);
+        int maxValue = Math.Max(_hScroll.Minimum, _hScroll.Maximum - _hScroll.LargeChange + 1);
+        target = Math.Clamp(target, _hScroll.Minimum, maxValue);
+
+        _hScroll.Value = target;     // programowe ustawienie NIE odpala zdarzenia Scroll,
+        _scrollOffsetX = target;     // więc offset trzeba zsynchronizować ręcznie
+        Invalidate();
+    }
 
     public void Load(IReadOnlyList<TaskItem> tasks, DateTime start, DateTime end)
     {

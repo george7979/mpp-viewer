@@ -56,7 +56,10 @@ public class TaskGridView : DataGridView
         });
         Columns.Add(new DataGridViewTextBoxColumn
         {
-            Name = "colResources", HeaderText = "Przypisani", Width = 140
+            // Fill: ostatnia kolumna pochłania wolną szerokość, więc jej prawa krawędź
+            // przylega do wykresu. Przeciąganie splittera poszerza/zwęża tę kolumnę.
+            Name = "colResources", HeaderText = "Przypisani",
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, MinimumWidth = 100
         });
 
         // Sortowanie po nagłówkach wyłączone: tabela to hierarchiczne drzewo WBS,

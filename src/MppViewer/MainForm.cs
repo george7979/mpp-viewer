@@ -34,6 +34,19 @@ public class MainForm : Form
 
         // Wykres odczytuje geometrię wierszy z tabeli i sam nasłuchuje jej przewijania.
         _gantt.AttachGrid(_grid);
+
+        // Dwuklik w wiersz przewija wykres do daty startu klikniętego zadania.
+        _grid.CellDoubleClick += OnRowDoubleClick;
+    }
+
+    private void OnRowDoubleClick(object? sender, DataGridViewCellEventArgs e)
+    {
+        if (e.RowIndex < 0) return;  // nagłówek
+        if (_grid.Rows[e.RowIndex].Tag is not TaskItem task) return;
+
+        var date = task.Start ?? task.Finish;
+        if (date.HasValue)
+            _gantt.ScrollToDate(date.Value);
     }
 
     protected override void OnLoad(EventArgs e)
@@ -41,8 +54,10 @@ public class MainForm : Form
         base.OnLoad(e);
         // Ustawiane dopiero teraz — w konstruktorze SplitContainer nie ma jeszcze
         // realnego rozmiaru, a SplitterDistance poza zakresem rzuca wyjątek.
+        // 780 mieści wszystkie stałe kolumny + kolumnę Fill, więc tabela startuje
+        // bez poziomego scrolla, a "Przypisani" od razu dochodzi do wykresu.
         int max = _split.Width - _split.Panel2MinSize - _split.SplitterWidth;
-        _split.SplitterDistance = Math.Clamp(480, _split.Panel1MinSize, Math.Max(_split.Panel1MinSize, max));
+        _split.SplitterDistance = Math.Clamp(780, _split.Panel1MinSize, Math.Max(_split.Panel1MinSize, max));
     }
 
     private void BuildMenu()
