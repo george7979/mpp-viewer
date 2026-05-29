@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue)
 ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
 
-> **Early version (1.2.0)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
+> **Early version (1.2.1)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
 
 A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It shows the task list and a synchronized Gantt chart side by side — no Microsoft Project installation required.
 
