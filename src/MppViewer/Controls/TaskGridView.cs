@@ -58,6 +58,12 @@ public class TaskGridView : DataGridView
         {
             Name = "colResources", HeaderText = "Przypisani", Width = 140
         });
+
+        // Sortowanie po nagłówkach wyłączone: tabela to hierarchiczne drzewo WBS,
+        // a sortowanie przestawiłoby wiersze, rozbijając wcięcia/pogrubienia i
+        // rozjeżdżając je z wykresem (Gantt mapuje zadania po kolejności wierszy).
+        foreach (DataGridViewColumn column in Columns)
+            column.SortMode = DataGridViewColumnSortMode.NotSortable;
     }
 
     public void LoadTasks(IReadOnlyList<TaskItem> tasks)
@@ -81,7 +87,26 @@ public class TaskGridView : DataGridView
             // Wyróżnij poziomy struktury (PROJEKT/ETAP/...) pogrubieniem.
             if (task.IsSummary)
                 Rows[rowIndex].DefaultCellStyle.Font = _summaryFont;
+
+            // Zachowaj zadanie przy wierszu, by filtr mógł sprawdzić dopasowanie
+            // bez przeładowywania tabeli.
+            Rows[rowIndex].Tag = task;
         }
+    }
+
+    /// <summary>
+    /// Wyszarza wiersze zadań nieprzypisanych do wybranej osoby; null = wszystkie
+    /// w normalnym kolorze. Nie usuwa wierszy — to tylko styl widoku.
+    /// </summary>
+    public void SetResourceFilter(string? resource)
+    {
+        foreach (DataGridViewRow row in Rows)
+        {
+            if (row.Tag is not TaskItem task) continue;
+            bool dim = resource != null && !task.ResourceNames.Contains(resource);
+            row.DefaultCellStyle.ForeColor = dim ? Color.Silver : Color.Empty;
+        }
+        Invalidate();
     }
 
     private static string FormatDuration(TimeSpan duration)

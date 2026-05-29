@@ -24,6 +24,7 @@ public class GanttControl : Panel
     private int _scrollOffsetX;
     private Dictionary<int, int> _taskRowIndex = new();
     private TaskGridView? _grid;
+    private string? _highlightResource;
 
     public GanttControl()
     {
@@ -52,6 +53,19 @@ public class GanttControl : Panel
         _grid.RowsRemoved += (_, __) => Invalidate();
         _grid.Resize += (_, __) => Invalidate();
     }
+
+    /// <summary>
+    /// Podświetla zadania wybranej osoby, wyszarzając pozostałe. null = pokaż wszystkie
+    /// w pełnym kolorze. To stan widoku — nie zmienia zbioru zadań ani geometrii.
+    /// </summary>
+    public void SetResourceFilter(string? resource)
+    {
+        _highlightResource = resource;
+        Invalidate();
+    }
+
+    private bool IsDimmed(TaskItem task)
+        => _highlightResource != null && !task.ResourceNames.Contains(_highlightResource);
 
     public void Load(IReadOnlyList<TaskItem> tasks, DateTime start, DateTime end)
     {
@@ -202,11 +216,11 @@ public class GanttControl : Panel
         for (int i = 0; i < _tasks.Count; i++)
         {
             if (!TryRowBounds(i, out int top, out int height)) continue;
-            DrawTaskBar(g, _tasks[i], top, height, _tasks[i].IsSummary);
+            DrawTaskBar(g, _tasks[i], top, height, _tasks[i].IsSummary, IsDimmed(_tasks[i]));
         }
     }
 
-    private void DrawTaskBar(Graphics g, TaskItem task, int top, int height, bool summary)
+    private void DrawTaskBar(Graphics g, TaskItem task, int top, int height, bool summary, bool dim)
     {
         if (task.Start == null || task.Finish == null) return;
 
@@ -218,15 +232,16 @@ public class GanttControl : Panel
 
         if (summary)
         {
-            // Zadanie sumaryczne (rodzic): cienka czarna belka z trójkątnymi końcówkami.
+            // Zadanie sumaryczne (rodzic): cienka belka z trójkątnymi końcówkami.
+            var fill = dim ? Brushes.Silver : Brushes.Black;
             float h = 5f;
             float y = top + (height - h) / 2f;
-            g.FillRectangle(Brushes.Black, x1, y, barWidth, h);
-            g.FillPolygon(Brushes.Black, new[]
+            g.FillRectangle(fill, x1, y, barWidth, h);
+            g.FillPolygon(fill, new[]
             {
                 new PointF(x1, y), new PointF(x1, y + 9), new PointF(x1 + 6, y)
             });
-            g.FillPolygon(Brushes.Black, new[]
+            g.FillPolygon(fill, new[]
             {
                 new PointF(x1 + barWidth, y), new PointF(x1 + barWidth, y + 9), new PointF(x1 + barWidth - 6, y)
             });
@@ -237,14 +252,18 @@ public class GanttControl : Panel
             float y = top + pad;
             float h = Math.Max(6f, height - pad * 2);
 
-            g.FillRectangle(Brushes.LightSteelBlue, x1, y, barWidth, h);
-            float progressWidth = barWidth * Math.Clamp(task.PercentComplete, 0, 100) / 100f;
-            if (progressWidth > 0)
-                g.FillRectangle(Brushes.SteelBlue, x1, y, progressWidth, h);
-            g.DrawRectangle(Pens.SteelBlue, x1, y, barWidth, h);
+            g.FillRectangle(dim ? Brushes.Gainsboro : Brushes.LightSteelBlue, x1, y, barWidth, h);
+            if (!dim)
+            {
+                float progressWidth = barWidth * Math.Clamp(task.PercentComplete, 0, 100) / 100f;
+                if (progressWidth > 0)
+                    g.FillRectangle(Brushes.SteelBlue, x1, y, progressWidth, h);
+            }
+            g.DrawRectangle(dim ? Pens.Silver : Pens.SteelBlue, x1, y, barWidth, h);
 
-            // Przypisani zaraz za paskiem; przycięcie obszaru danych obetnie długie nazwiska.
-            if (task.ResourceNames.Count > 0)
+            // Etykietę z przypisanymi rysujemy tylko dla wyróżnionych pasków — przy
+            // wyszarzonych pomijamy, by nie zaśmiecać widoku po włączeniu filtra.
+            if (!dim && task.ResourceNames.Count > 0)
             {
                 string label = string.Join("; ", task.ResourceNames);
                 float labelY = top + (height - Font.Height) / 2f;

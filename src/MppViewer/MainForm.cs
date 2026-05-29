@@ -1,13 +1,18 @@
 using MppViewer.Controls;
+using MppViewer.Models;
 using MppViewer.Services;
 
 namespace MppViewer;
 
 public class MainForm : Form
 {
+    private const string AllResources = "(wszyscy)";
+
     private readonly TaskGridView _grid = new();
     private readonly GanttControl _gantt = new();
     private readonly SplitContainer _split = new();
+    private readonly ToolStrip _toolbar = new();
+    private readonly ToolStripComboBox _resourceCombo = new();
     private readonly StatusStrip _status = new();
     private readonly ToolStripStatusLabel _statusFile = new() { Text = "Brak pliku" };
     private readonly ToolStripStatusLabel _statusCount = new();
@@ -24,7 +29,8 @@ public class MainForm : Form
         // najpierw zarezerwowały swoje krawędzie, zamiast zostać przykryte przez Fill.
         BuildLayout();
         BuildStatusBar();
-        BuildMenu();
+        BuildToolbar();
+        BuildMenu();   // dodawane ostatnie → dokowane najpierw → zostaje na samej górze
 
         // Wykres odczytuje geometrię wierszy z tabeli i sam nasłuchuje jej przewijania.
         _gantt.AttachGrid(_grid);
@@ -52,6 +58,44 @@ public class MainForm : Form
         menuStrip.Items.Add(fileMenu);
         Controls.Add(menuStrip);
         MainMenuStrip = menuStrip;
+    }
+
+    private void BuildToolbar()
+    {
+        _toolbar.GripStyle = ToolStripGripStyle.Hidden;
+        _resourceCombo.DropDownStyle = ComboBoxStyle.DropDownList;  // tylko wybór z listy, bez wpisywania
+        _resourceCombo.AutoSize = false;
+        _resourceCombo.Width = 220;
+        _resourceCombo.SelectedIndexChanged += OnResourceFilterChanged;
+
+        _toolbar.Items.Add(new ToolStripLabel("Pokaż przypisane do:"));
+        _toolbar.Items.Add(_resourceCombo);
+        Controls.Add(_toolbar);
+    }
+
+    private void OnResourceFilterChanged(object? sender, EventArgs e)
+    {
+        // Indeks 0 = "(wszyscy)" → brak filtra (null).
+        string? resource = _resourceCombo.SelectedIndex <= 0
+            ? null
+            : _resourceCombo.SelectedItem as string;
+        _grid.SetResourceFilter(resource);
+        _gantt.SetResourceFilter(resource);
+    }
+
+    private void PopulateResourceFilter(IReadOnlyList<TaskItem> tasks)
+    {
+        var names = tasks
+            .SelectMany(t => t.ResourceNames)
+            .Distinct()
+            .OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        _resourceCombo.Items.Clear();
+        _resourceCombo.Items.Add(AllResources);
+        foreach (var name in names)
+            _resourceCombo.Items.Add(name);
+        _resourceCombo.SelectedIndex = 0;  // reset filtra przy nowym pliku
     }
 
     private void BuildStatusBar()
@@ -97,6 +141,7 @@ public class MainForm : Form
 
             _grid.LoadTasks(data.Tasks);
             _gantt.Load(data.Tasks, data.ProjectStart, data.ProjectFinish);
+            PopulateResourceFilter(data.Tasks);
 
             _statusFile.Text = System.IO.Path.GetFileName(path);
             _statusCount.Text = $"{data.Tasks.Count} zadań";
