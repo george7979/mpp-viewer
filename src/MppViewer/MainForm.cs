@@ -258,11 +258,15 @@ public class MainForm : Form
         _statusFile.BorderSides = ToolStripStatusLabelBorderSides.Right;
         _statusCount.BorderSides = ToolStripStatusLabelBorderSides.Right;
 
-        // Wersja czytana z assembly (zawsze zgodna z buildem), w stopce po prawej.
+        // Wersja aplikacji dosunięta do PRAWEJ krawędzi stopki. StatusStrip ma układ Table,
+        // w którym samo Alignment.Right nie wypycha elementu na koniec — dlatego wstawiamy
+        // pusty separator ze Spring=true, który pochłania wolną przestrzeń. Lewa krawędź przy
+        // wersji oddziela ją wizualnie od danych pliku (to wersja aplikacji, nie pliku).
+        var spacer = new ToolStripStatusLabel { Spring = true };
         _statusVersion.Text = AppVersion;
-        _statusVersion.Alignment = ToolStripItemAlignment.Right;
+        _statusVersion.BorderSides = ToolStripStatusLabelBorderSides.Left;
 
-        _status.Items.AddRange(new ToolStripItem[] { _statusFile, _statusCount, _statusRange, _statusVersion });
+        _status.Items.AddRange(new ToolStripItem[] { _statusFile, _statusCount, _statusRange, spacer, _statusVersion });
         Controls.Add(_status);
     }
 
