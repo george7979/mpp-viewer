@@ -92,10 +92,16 @@ public class MainForm : Form
         }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
         {
+            _statusFile.Text = "Błąd";
+            _statusCount.Text = "";
+            _statusRange.Text = "";
             MessageBox.Show($"Nie można otworzyć pliku:\n{ex.Message}", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         catch (Exception)
         {
+            _statusFile.Text = "Błąd";
+            _statusCount.Text = "";
+            _statusRange.Text = "";
             MessageBox.Show("Nie można odczytać pliku. Upewnij się, że jest to prawidłowy plik MS Project (.mpp).",
                 "Błąd odczytu", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
@@ -109,7 +115,8 @@ public class MainForm : Form
     {
         if (e.ScrollOrientation == ScrollOrientation.VerticalScroll)
         {
-            _gantt.FirstVisibleRow = _grid.FirstDisplayedScrollingRowIndex;
+            int idx = _grid.FirstDisplayedScrollingRowIndex;
+            _gantt.FirstVisibleRow = idx >= 0 ? idx : 0;
             _gantt.Invalidate();
         }
     }
