@@ -26,6 +26,9 @@ public class TaskGridView : DataGridView
         // Naprzemienne tło wierszy zgodne z pasami w wykresie — ten sam parzysty/nieparzysty
         // podział pozwala wzrokowo dopasować wiersz tabeli do paska Gantta.
         AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 248);
+        // Zaznaczenie w akcencie pomarańczowym (zamiast systemowego niebieskiego).
+        DefaultCellStyle.SelectionBackColor = Color.FromArgb(245, 130, 32);
+        DefaultCellStyle.SelectionForeColor = Color.White;
         typeof(DataGridView)
             .GetProperty("DoubleBuffered", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .SetValue(this, true);

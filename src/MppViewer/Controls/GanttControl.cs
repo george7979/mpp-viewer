@@ -18,6 +18,14 @@ public class GanttControl : Panel
     private const float PixelsPerDay = 15f;
     private const float ScrollLeftMargin = 12f;  // odstęp paska od lewej krawędzi po przewinięciu
 
+    // Akcent kolorystyczny — pomarańcz (~#F58220). Brushe/peny jako statyczne
+    // pola: żyją przez czas życia procesu, więc bez alokacji na każdym OnPaint.
+    private static readonly Color AccentColor = Color.FromArgb(245, 130, 32);
+    private static readonly Color AccentLight = Color.FromArgb(250, 213, 178);
+    private static readonly Brush BarFillBrush = new SolidBrush(AccentLight);
+    private static readonly Brush BarProgressBrush = new SolidBrush(AccentColor);
+    private static readonly Pen BarBorderPen = new Pen(AccentColor);
+
     private IReadOnlyList<TaskItem> _tasks = Array.Empty<TaskItem>();
     private DateTime _projectStart;
     private DateTime _projectEnd;
@@ -273,14 +281,14 @@ public class GanttControl : Panel
             float y = top + pad;
             float h = Math.Max(6f, height - pad * 2);
 
-            g.FillRectangle(dim ? Brushes.Gainsboro : Brushes.LightSteelBlue, x1, y, barWidth, h);
+            g.FillRectangle(dim ? Brushes.Gainsboro : BarFillBrush, x1, y, barWidth, h);
             if (!dim)
             {
                 float progressWidth = barWidth * Math.Clamp(task.PercentComplete, 0, 100) / 100f;
                 if (progressWidth > 0)
-                    g.FillRectangle(Brushes.SteelBlue, x1, y, progressWidth, h);
+                    g.FillRectangle(BarProgressBrush, x1, y, progressWidth, h);
             }
-            g.DrawRectangle(dim ? Pens.Silver : Pens.SteelBlue, x1, y, barWidth, h);
+            g.DrawRectangle(dim ? Pens.Silver : BarBorderPen, x1, y, barWidth, h);
 
             // Etykietę z przypisanymi rysujemy tylko dla wyróżnionych pasków — przy
             // wyszarzonych pomijamy, by nie zaśmiecać widoku po włączeniu filtra.
