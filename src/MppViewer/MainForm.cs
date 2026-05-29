@@ -27,6 +27,10 @@ public class MainForm : Form
         Size = new System.Drawing.Size(1280, 720);
         MinimumSize = new System.Drawing.Size(800, 500);
 
+        // Ikona okna/paska zadań z osadzonego zasobu (exe-owa ikona idzie z ApplicationIcon).
+        using (var iconStream = GetType().Assembly.GetManifestResourceStream("app.ico"))
+            if (iconStream != null) Icon = new System.Drawing.Icon(iconStream);
+
         // Kolejność dodawania determinuje dokowanie: kontrolka Dock.Fill musi trafić
         // do Controls jako pierwsza (najniższy z-order), aby menu (Top) i status (Bottom)
         // najpierw zarezerwowały swoje krawędzie, zamiast zostać przykryte przez Fill.

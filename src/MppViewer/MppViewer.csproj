@@ -8,6 +8,7 @@
     <AssemblyName>MppViewer</AssemblyName>
     <RootNamespace>MppViewer</RootNamespace>
     <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+    <ApplicationIcon>MppViewer.ico</ApplicationIcon>
     <Version>1.1.1</Version>
     <AssemblyVersion>1.1.1.0</AssemblyVersion>
     <FileVersion>1.1.1.0</FileVersion>
@@ -16,5 +17,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="net.sf.mpxj" Version="13.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Osadzony, by ustawić Form.Icon (okno/pasek zadań) w runtime; stała nazwa logiczna. -->
+    <EmbeddedResource Include="MppViewer.ico">
+      <LogicalName>app.ico</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>
