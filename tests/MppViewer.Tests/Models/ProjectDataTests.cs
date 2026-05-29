@@ -21,8 +21,11 @@ public class ProjectDataTests
         Assert.Equal(1, task.Id);
         Assert.Equal("Design", task.Name);
         Assert.Equal(1, task.OutlineLevel);
+        Assert.Equal(new DateTime(2025, 1, 6), task.Start);
+        Assert.Equal(new DateTime(2025, 1, 10), task.Finish);
         Assert.Equal(50, task.PercentComplete);
         Assert.Equal(TimeSpan.FromDays(5), task.Duration);
+        Assert.Empty(task.PredecessorIds);
     }
 
     [Fact]
