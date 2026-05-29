@@ -29,7 +29,25 @@ A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It 
 1. Download `MppViewer.exe` from the [latest release](https://github.com/george7979/mpp-viewer/releases/latest).
 2. Double-click to run. There is no installer.
 
-> **Note:** the executable is not code-signed. On first launch Windows SmartScreen may show a warning. Click **More info** → **Run anyway**.
+### ⚠️ Windows will warn that this app is "unrecognized" — this is expected
+
+`MppViewer.exe` is **not code-signed** (a code-signing certificate is a paid, identity-verified product this hobby project does not have). Windows therefore treats it as an unknown publisher and shows scary-looking warnings. **They do not mean the file is malware** — only that Windows cannot verify who published it. Because the project is open source, you can read every line and [build the exe yourself](#building-from-source) if you prefer not to trust the prebuilt binary.
+
+You will likely hit one or two of these:
+
+**1. Browser download warning.** Edge/Chrome may say the file *"isn't commonly downloaded"* or *"can harm your computer"*. Choose **Keep** / **Keep anyway** (in Edge: click the **···** next to the download → **Keep**).
+
+**2. SmartScreen blue dialog on first launch.** A full-screen blue window appears:
+
+> **Windows protected your PC**
+> Microsoft Defender SmartScreen prevented an unrecognized app from starting. Running this app might put your PC at risk.
+
+By default it only shows a **Don't run** button. To run it anyway:
+
+1. Click **More info** (the small link in the dialog).
+2. A **Run anyway** button appears — click it.
+
+The app then starts normally, and Windows remembers your choice for that file. (The exact wording may differ depending on your Windows display language.)
 
 ## Usage
 
