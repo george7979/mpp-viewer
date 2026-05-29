@@ -14,9 +14,14 @@
     <FileVersion>1.2.1.0</FileVersion>
     <Product>MPP Viewer</Product>
     <Company>george7979</Company>
+    <!-- Wyłącz BinaryFormatter (znany wektor RCE przez deserializację). Flagę domyślnie
+         włącza zależność MPXJ/IKVM w runtimeconfig; nasz kod jej nie używa. Trzymamy false,
+         o ile parsowanie .mpp/.xml działa (zweryfikowane smoke-testem). -->
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="net.sf.mpxj" Version="13.*" />
+    <!-- Wersja przypięta dokładnie (nie 13.*) dla reprodukowalności buildu i kontroli aktualizacji. -->
+    <PackageReference Include="net.sf.mpxj" Version="13.12.0" />
   </ItemGroup>
   <ItemGroup>
     <!-- Osadzony, by ustawić Form.Icon (okno/pasek zadań) w runtime; stała nazwa logiczna. -->

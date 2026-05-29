@@ -193,10 +193,13 @@ public class MainForm : Form
         };
         if (Icon != null) dlg.Icon = Icon;
 
+        // using: WinForms nie zwalnia Font przypisanego do kontrolki. ShowDialog jest modalny,
+        // więc font żyje przez cały czas wyświetlania i zostaje zwolniony po zamknięciu okna.
+        using var titleFont = new System.Drawing.Font("Segoe UI", 12f, System.Drawing.FontStyle.Bold);
         var title = new Label
         {
             Text = header,
-            Font = new System.Drawing.Font("Segoe UI", 12f, System.Drawing.FontStyle.Bold),
+            Font = titleFont,
             AutoSize = true,
             Location = new System.Drawing.Point(16, 16)
         };
