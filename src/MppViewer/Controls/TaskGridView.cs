@@ -65,6 +65,8 @@ public class TaskGridView : DataGridView
 
     private static string FormatDuration(TimeSpan duration)
     {
+        if (duration <= TimeSpan.Zero)
+            return "—";
         if (duration.TotalDays >= 1)
             return $"{duration.TotalDays:F1} d";
         if (duration.TotalHours >= 1)
