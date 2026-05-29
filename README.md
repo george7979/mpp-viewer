@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue)
 ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
 
-> **Early version (1.1.4)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
+> **Early version (1.2.0)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
 
 A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It shows the task list and a synchronized Gantt chart side by side — no Microsoft Project installation required.
 
@@ -17,6 +17,7 @@ A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It 
 - **Task table** — ID, task name (indented by WBS outline level), duration, start, finish, % complete, and assigned resources. The resource column auto-fits its content and the chart snaps flush to the right of the table.
 - **Gantt chart** — task bars on a months timeline with progress fill, Finish-to-Start dependency arrows, and the assigned people shown next to each bar.
 - **Synchronized view** — the table and the chart share row stripes and scroll together, so every row lines up with its bar. The mouse wheel over the chart scrolls both panes.
+- **Zoom the timeline** — hold `Ctrl` and scroll the mouse wheel over the chart (or use the **Zoom −/+** buttons) to stretch or compress the time axis; the date under the cursor stays put. **Fit to width** scales the whole project to the window, and zooming out never goes below that fit.
 - **Jump to a task** — double-click any row to pan the timeline so that task's bar moves to the left edge.
 - **Summary tasks highlighted** — parent (roll-up) tasks appear in **bold** in the table and as bracketed bars in the chart.
 - **Highlight by person** — the "Show assigned to:" toolbar lists everyone assigned in the file; pick a name to grey out every task not assigned to them (in both panes), or *(everyone)* to clear.
@@ -53,14 +54,15 @@ The app then starts normally, and Windows remembers your choice for that file. (
 
 ## Usage
 
-1. Click **Open…** (or press `Ctrl+O`) and pick a `.mpp` file — or double-click an `.mpp` file in Explorer once you've opened it with MPP Viewer / set it as the default app. Columns auto-fit and the chart snaps to the right of the table.
+1. Open a `.mpp` file via **File → Open…** (or press `Ctrl+O`) — or double-click an `.mpp` file in Explorer once you've set MPP Viewer as the default app. Columns auto-fit and the chart snaps to the right of the table.
 2. Scroll the table vertically — the chart follows. Use the chart's bottom scrollbar to pan the timeline; the mouse wheel over the chart scrolls both panes.
-3. **Drag the chart to pan it** — grab the Gantt area with the mouse (or swipe with a finger on a touchscreen) and drag in any direction: left/right scrolls the timeline, up/down scrolls the rows.
-4. **Double-click a row** to scroll the timeline to that task.
-5. Use **Show assigned to:** at the top to highlight one person's tasks (others are greyed out); pick *(everyone)* to show everyone again.
-6. Drag the splitter between the panes to resize them.
+3. **Zoom the time axis** — hold `Ctrl` and scroll the mouse wheel over the chart (the date under the cursor stays put), or use the **Zoom −/+** buttons. Click **Fit to width** to scale the whole project to the window; zooming out never goes below that fit.
+4. **Drag the chart to pan it** — grab the Gantt area with the mouse (or swipe with a finger on a touchscreen) and drag in any direction: left/right scrolls the timeline, up/down scrolls the rows.
+5. **Double-click a row** to scroll the timeline to that task.
+6. Use **Show assigned to:** on the toolbar to highlight one person's tasks (others are greyed out); pick *(everyone)* to show everyone again.
+7. Drag the splitter between the panes to resize them.
 
-The status bar shows the file name, task count, the project's date range, and the app version (bottom-right). The **GitHub** menu item opens this repository.
+The status bar shows the file name, task count, the project's date range, and the app version (bottom-right). **Help → About** shows the version and a clickable link to this repository; **Help → GitHub** opens it directly.
 
 ## What it does not do (yet)
 
