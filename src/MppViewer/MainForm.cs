@@ -130,7 +130,7 @@ public class MainForm : Form
         _toolbar.Height = 38;
         _toolbar.Font = new System.Drawing.Font("Segoe UI", 10f);
 
-        // Lewa strona: plik | widok (zoom) | filtr.
+        // Lewa strona: plik | filtr | widok (zoom/fit bliżej wykresu, który jest po prawej).
         var openButton = new ToolStripButton("Open…") { DisplayStyle = ToolStripItemDisplayStyle.Text };
         openButton.Click += OnOpenClick;
 
@@ -160,12 +160,12 @@ public class MainForm : Form
 
         _toolbar.Items.Add(openButton);
         _toolbar.Items.Add(new ToolStripSeparator());
+        _toolbar.Items.Add(new ToolStripLabel("Show assigned to:"));
+        _toolbar.Items.Add(_resourceCombo);
+        _toolbar.Items.Add(new ToolStripSeparator());
         _toolbar.Items.Add(zoomOutButton);
         _toolbar.Items.Add(zoomInButton);
         _toolbar.Items.Add(fitButton);
-        _toolbar.Items.Add(new ToolStripSeparator());
-        _toolbar.Items.Add(new ToolStripLabel("Show assigned to:"));
-        _toolbar.Items.Add(_resourceCombo);
         _toolbar.Items.Add(exitButton);
         _toolbar.Items.Add(githubButton);
         _toolbar.Items.Add(aboutButton);
