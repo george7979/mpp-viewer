@@ -15,7 +15,8 @@ public class GanttControl : Panel
 {
     /// <summary>Wspólna wysokość nagłówka — tabela ustawia ColumnHeadersHeight na tę samą wartość.</summary>
     public const int HeaderHeight = 44;
-    private float _pixelsPerDay = 15f;
+    private const float DefaultPixelsPerDay = 15f;
+    private float _pixelsPerDay = DefaultPixelsPerDay;
     private const int WheelNotchDelta = 120;   // standardowy ząbek kółka myszy = 120 jednostek Delta
     private const float ScrollLeftMargin = 12f;  // odstęp paska od lewej krawędzi po przewinięciu
 
@@ -102,30 +103,36 @@ public class GanttControl : Panel
     }
 
     /// <summary>
-    /// Zoom osi czasu względem punktu pod kursorem: data pod kursorem zostaje w tym samym
-    /// miejscu na ekranie, a reszta osi rozsuwa/zsuwa się wokół niej. Zmienia tylko skalę
-    /// poziomą — geometria wierszy (sterowana przez tabelę) pozostaje nietknięta.
+    /// Zoom osi czasu wokół punktu zaczepienia (anchorX w pikselach ekranu): punkt osi pod
+    /// anchorX zostaje w miejscu, reszta rozsuwa/zsuwa się wokół niego. notches = liczba
+    /// "ząbków" (dodatnie = przybliżenie, ujemne = oddalenie). Dolny limit = skala "fit to
+    /// width", górny = MaxPixelsPerDay. Zmienia tylko skalę poziomą — geometria wierszy
+    /// (sterowana przez tabelę) pozostaje nietknięta.
     /// </summary>
-    private void ZoomAt(int cursorX, int wheelDelta)
+    private void ApplyZoom(int anchorX, int notches)
     {
         if (_tasks.Count == 0) return;
 
         float oldPpd = _pixelsPerDay;
-        // Myszy/touchpady wysyłające Delta < jednego ząbka dają notches == 0 → bez zoomu,
-        // dopóki skumulowane przewinięcie nie przekroczy ząbka. To zachowanie jest zamierzone.
-        int notches = wheelDelta / WheelNotchDelta;
         float factor = (float)Math.Pow(GanttMetrics.ZoomStep, notches);
-        float newPpd = GanttMetrics.ClampPixelsPerDay(oldPpd * factor);
+        float fitPpd = GanttMetrics.FitPixelsPerDay(Width, _projectStart, _projectEnd);
+        float newPpd = GanttMetrics.ClampZoom(oldPpd * factor, fitPpd);
         if (newPpd == oldPpd) return;                               // już na granicy zakresu
 
         _pixelsPerDay = newPpd;
         _totalWidth = GanttMetrics.TotalWidth(_projectStart, _projectEnd, _pixelsPerDay);
-        _scrollOffsetX = GanttMetrics.ZoomedScrollOffset(cursorX, _scrollOffsetX, oldPpd, newPpd);
+        _scrollOffsetX = GanttMetrics.ZoomedScrollOffset(anchorX, _scrollOffsetX, oldPpd, newPpd);
 
         RecalcHScroll();
         ClampScrollOffset();
         Invalidate();
     }
+
+    /// <summary>Przybliża oś czasu o jeden ząbek, zaczepiając zoom na środku widoku.</summary>
+    public void ZoomIn() => ApplyZoom(Width / 2, +1);
+
+    /// <summary>Oddala oś czasu o jeden ząbek (nie schodzi poniżej "fit to width").</summary>
+    public void ZoomOut() => ApplyZoom(Width / 2, -1);
 
     /// <summary>
     /// Dobiera skalę osi czasu tak, by cały projekt zmieścił się na szerokość widoku,
@@ -140,7 +147,7 @@ public class GanttControl : Panel
         _scrollOffsetX = 0;
 
         RecalcHScroll();
-        ClampScrollOffset();   // ten sam wzorzec synchronizacji co w ZoomAt (offset 0 zawsze prawidłowy)
+        ClampScrollOffset();   // ten sam wzorzec synchronizacji co w ApplyZoom (offset 0 zawsze prawidłowy)
         Invalidate();
     }
 
@@ -164,6 +171,12 @@ public class GanttControl : Panel
         _taskRowIndex = tasks.Select((t, i) => (t.Id, i))
                              .ToDictionary(x => x.Id, x => x.i);
 
+        // Skala startowa = domyślna, ale nie poniżej "fit to width" (krótki projekt, gdzie
+        // fit wypada powyżej 15px/dzień, ładuje się od razu dopasowany — bez skoku przy
+        // pierwszym oddaleniu). Gdy Width jeszcze nieznane, FitPixelsPerDay schodzi do progu
+        // czytelności i start zostaje DefaultPixelsPerDay.
+        _pixelsPerDay = GanttMetrics.ClampZoom(
+            DefaultPixelsPerDay, GanttMetrics.FitPixelsPerDay(Width, _projectStart, _projectEnd));
         _totalWidth = GanttMetrics.TotalWidth(_projectStart, _projectEnd, _pixelsPerDay);
         _scrollOffsetX = 0;
         _hScroll.Value = 0;
@@ -187,7 +200,9 @@ public class GanttControl : Panel
         // Ctrl + kółko = zoom osi czasu (zaczepiony pod kursorem). Bez Ctrl = scroll pionowy.
         if ((ModifierKeys & Keys.Control) == Keys.Control)
         {
-            ZoomAt(e.X, e.Delta);
+            // Myszy/touchpady wysyłające Delta < jednego ząbka dają notches == 0 → bez zoomu,
+            // dopóki skumulowane przewinięcie nie przekroczy ząbka. To zachowanie jest zamierzone.
+            ApplyZoom(e.X, e.Delta / WheelNotchDelta);
             return;
         }
 
