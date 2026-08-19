@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue)
 ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
 
-> **Early version (1.2.2)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
+> **Early version (1.3.0)** — a young project under active development. Core viewing works, but the UI and behaviour may change between releases, and some `.mpp` features are not yet rendered. Feedback is welcome.
 
 A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It shows the task list and a synchronized Gantt chart side by side — no Microsoft Project installation required.
 
@@ -99,7 +99,7 @@ MPP Viewer is designed to be safe to adopt on managed / corporate machines:
 **Before rolling it out to a team:**
 
 1. **Get it approved by your IT / security team** rather than running it ad hoc — point them to this repository and the release page as the provenance reference.
-2. **Pin a specific version** (e.g. `v1.2.2`) for everyone, instead of "latest", for consistency and reproducible support.
+2. **Pin a specific version** (e.g. `v1.3.0`) for everyone, instead of "latest", for consistency and reproducible support.
 3. **Expect the unsigned-binary prompt.** The `.exe` is not yet code-signed, so Windows SmartScreen warns on first launch and some antivirus/EDR re-scans downloaded copies (the file's *Mark of the Web*). **Code signing is on the roadmap** and will remove this friction; until then, IT can resolve it by deploying the file through management tooling (Intune / SCCM) or by allow-listing the file hash, and individuals can right-click the file → Properties → **Unblock**.
 
 If you run it on client hardware as a contractor, treat it as your own pre-existing, independently published open-source tool, and clear it through the client's software-approval process like any other utility.
