@@ -64,6 +64,17 @@ User → File→Open → MppReader (MPXJ) → ProjectData/TaskItem → TaskGridV
 - **Releases** attach the CI-built binary (reproducible) rather than a local build: download the artifact from the `main` run → **sign it locally if a certificate is available** (Certum Open Source cloud cert via SimplySign Desktop; skipped so far, see below) → `gh release create vX.Y.Z --target main <exe>` (this creates the tag remotely). Bump `<Version>`/`<FileVersion>` in `MppViewer.csproj` for each release. The full signed-release procedure (purchase, one-time setup, `signtool` command, verification) is in [`docs/RELEASE.md`](docs/RELEASE.md).
 - **Signing is local, not in CI.** Certum SimplySign has no headless API — the key lives in Certum's cloud HSM, reached only through the SimplySign Desktop app (manual TOTP, 2-hour session). The build stays reproducible in CI; the signature is applied by hand. Releases through **v1.3.0 are unsigned** (Windows SmartScreen warnings, documented in README). The signing procedure is written up and ready in [`docs/RELEASE.md`](docs/RELEASE.md), but it waits on the certificate actually being purchased — do not assume any given release is signed; check the release assets. The README's "unsigned"/"on the roadmap" wording is only updated once a signed binary actually ships.
 
+## Screenshots
+
+The two images in `pics/` are shot from [`docs/sample/SampleProject.xml`](docs/sample/SampleProject.xml) —
+a fictional "Website Redesign" project (16 tasks, 4 WBS levels, 6 named resources, Finish-to-Start
+links). Reproduce them by opening that file and setting: **full-view.png** — filter *(everyone)*, row 9
+*Development* selected, **Fit to width**; **highlight-by-person.png** — same view with the filter set to
+*Eve Park*. Shoot at roughly 1630x700 so the toolbar's four buttons fit without overflowing.
+
+Keep the sample file in the repo. It was once absent and the data had to be reconstructed by reading
+the old screenshots pixel by pixel.
+
 ## Scope (intentionally out, do not add without a request)
 
 Editing, resource sheets, filtering/grouping, export (PDF/Excel), calendar view, baselines. The full design and task breakdown live in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
