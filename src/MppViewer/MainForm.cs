@@ -80,6 +80,17 @@ public class MainForm : Form
             _gantt.ScrollToDate(date.Value);
     }
 
+    // Dopasowuje oś czasu wykresu do zaznaczonego zadania. Wiersz sumaryczny niesie
+    // Start/Finish całej swojej gałęzi WBS, więc "zoom do fazy" wychodzi bez osobnego kodu.
+    // Brak zaznaczenia lub zadanie bez dat → brak akcji (przycisk zostaje aktywny).
+    private void ZoomToSelectedTask()
+    {
+        if (_grid.CurrentRow?.Tag is not TaskItem task) return;
+        if (task.Start is not { } start || task.Finish is not { } finish) return;
+
+        _gantt.ZoomToRange(start, finish);
+    }
+
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
@@ -145,7 +156,11 @@ public class MainForm : Form
         _resourceCombo.SelectedIndexChanged += OnResourceFilterChanged;
 
         // Prawa strona (Alignment.Right): pierwszy dodany do prawej ląduje najbardziej z prawej,
-        // więc dodajemy Fit, Zoom +, Zoom − → wizualnie: Zoom − Zoom + Fit.
+        // więc dodajemy Fit to task, Fit to width, Zoom +, Zoom −
+        // → wizualnie: Zoom − Zoom + Fit to width Fit to task.
+        var fitTaskButton = new ToolStripButton("Fit to task")
+        { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
+        fitTaskButton.Click += (_, __) => ZoomToSelectedTask();
         var fitButton = new ToolStripButton("Fit to width")
         { DisplayStyle = ToolStripItemDisplayStyle.Text, Alignment = ToolStripItemAlignment.Right };
         fitButton.Click += (_, __) => _gantt.ZoomToFit();
@@ -159,6 +174,7 @@ public class MainForm : Form
         _toolbar.Items.Add(new ToolStripLabel("Show assigned to:"));
         _toolbar.Items.Add(_resourceCombo);
         // Wyrównane do prawej (kolejność dodawania → od prawej krawędzi):
+        _toolbar.Items.Add(fitTaskButton);
         _toolbar.Items.Add(fitButton);
         _toolbar.Items.Add(zoomInButton);
         _toolbar.Items.Add(zoomOutButton);

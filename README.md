@@ -20,6 +20,7 @@ A portable, **read-only** desktop viewer for Microsoft Project `.mpp` files. It 
 - **Gantt chart** — task bars on a months timeline with progress fill, Finish-to-Start dependency arrows, and the assigned people shown next to each bar.
 - **Synchronized view** — the table and the chart share row stripes and scroll together, so every row lines up with its bar. The mouse wheel over the chart scrolls both panes.
 - **Zoom the timeline** — hold `Ctrl` and scroll the mouse wheel over the chart (or use the **Zoom −/+** buttons) to stretch or compress the time axis; the date under the cursor stays put. **Fit to width** scales the whole project to the window, and zooming out never goes below that fit.
+- **Fit to task** — select a row and click **Fit to task** to scale the time axis to that task's own span and centre it. Selecting a summary task fits its whole phase. Very short tasks stop at the maximum zoom level rather than filling the window, and stay centred.
 - **Jump to a task** — double-click any row to pan the timeline so that task's bar moves to the left edge.
 - **Summary tasks highlighted** — parent (roll-up) tasks appear in **bold** in the table and as bracketed bars in the chart.
 - **Highlight by person** — the "Show assigned to:" toolbar lists everyone assigned in the file; pick a name to grey out every task not assigned to them (in both panes), or *(everyone)* to clear.
@@ -61,10 +62,11 @@ The app then starts normally, and Windows remembers your choice for that file. (
 1. Open a `.mpp` file via **File → Open…** (or press `Ctrl+O`) — or double-click an `.mpp` file in Explorer once you've set MPP Viewer as the default app. Columns auto-fit and the chart snaps to the right of the table.
 2. Scroll the table vertically — the chart follows. Use the chart's bottom scrollbar to pan the timeline; the mouse wheel over the chart scrolls both panes.
 3. **Zoom the time axis** — hold `Ctrl` and scroll the mouse wheel over the chart (the date under the cursor stays put), or use the **Zoom −/+** buttons. Click **Fit to width** to scale the whole project to the window; zooming out never goes below that fit.
-4. **Drag the chart to pan it** — grab the Gantt area with the mouse (or swipe with a finger on a touchscreen) and drag in any direction: left/right scrolls the timeline, up/down scrolls the rows.
-5. **Double-click a row** to scroll the timeline to that task.
-6. Use **Show assigned to:** on the toolbar to highlight one person's tasks (others are greyed out); pick *(everyone)* to show everyone again.
-7. Drag the splitter between the panes to resize them.
+4. **Zoom to one task** — select a row and click **Fit to task**: the time axis scales to that task's span and centres it. On a summary task this fits the whole phase. A very short task stops at the maximum zoom level instead of filling the window, and stays centred.
+5. **Drag the chart to pan it** — grab the Gantt area with the mouse (or swipe with a finger on a touchscreen) and drag in any direction: left/right scrolls the timeline, up/down scrolls the rows.
+6. **Double-click a row** to scroll the timeline to that task.
+7. Use **Show assigned to:** on the toolbar to highlight one person's tasks (others are greyed out); pick *(everyone)* to show everyone again.
+8. Drag the splitter between the panes to resize them.
 
 The status bar shows the file name, task count, the project's date range, and the app version (bottom-right). **Help → About** shows the version and a clickable link to this repository; **Help → GitHub** opens it directly.
 

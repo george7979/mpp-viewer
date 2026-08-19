@@ -43,6 +43,20 @@ public static class GanttMetrics
     }
 
     /// <summary>
+    /// New (unclamped) horizontal scroll offset that puts the midpoint of [rangeStart,
+    /// rangeEnd] at the middle of a viewportWidth-wide view. The result may be negative
+    /// (range sits near the project start) or past the scrollbar maximum (near the end);
+    /// clamping to the valid scroll range is the caller's job.
+    /// </summary>
+    public static int CenteredScrollOffset(DateTime rangeStart, DateTime rangeEnd,
+                                          DateTime projectStart, float pixelsPerDay, int viewportWidth)
+    {
+        float x1 = DateToX(rangeStart, projectStart, pixelsPerDay);
+        float x2 = DateToX(rangeEnd, projectStart, pixelsPerDay);
+        return (int)Math.Round((x1 + x2) / 2f - viewportWidth / 2f);
+    }
+
+    /// <summary>
     /// Scale that fits [start, end] into viewportWidth (minus a small margin), clamped to
     /// [Min, Max]. Returns MaxPixelsPerDay for a non-positive day span (no divide by zero).
     /// </summary>

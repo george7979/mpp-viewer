@@ -151,6 +151,30 @@ public class GanttControl : Panel
         Invalidate();
     }
 
+    /// <summary>
+    /// Dobiera skalę osi czasu tak, by przedział [rangeStart, rangeEnd] wypełnił szerokość
+    /// widoku, i przewija oś tak, by ten przedział wypadł na środku. Dla krótkiego zadania
+    /// skala zatrzymuje się na MaxPixelsPerDay — pasek nie wypełni wtedy całej szerokości,
+    /// ale i tak zostanie wyśrodkowany. Dolna granica to skala "fit to width" całego
+    /// projektu, więc akcja nigdy nie oddala widoku bardziej niż przycisk Fit to width.
+    /// Zmienia tylko oś poziomą — geometria wierszy (sterowana przez tabelę) bez zmian.
+    /// </summary>
+    public void ZoomToRange(DateTime rangeStart, DateTime rangeEnd)
+    {
+        if (_tasks.Count == 0) return;
+
+        float fitPpd = GanttMetrics.FitPixelsPerDay(Width, _projectStart, _projectEnd);
+        _pixelsPerDay = GanttMetrics.ClampZoom(
+            GanttMetrics.FitPixelsPerDay(Width, rangeStart, rangeEnd), fitPpd);
+        _totalWidth = GanttMetrics.TotalWidth(_projectStart, _projectEnd, _pixelsPerDay);
+        _scrollOffsetX = GanttMetrics.CenteredScrollOffset(
+            rangeStart, rangeEnd, _projectStart, _pixelsPerDay, Width);
+
+        RecalcHScroll();
+        ClampScrollOffset();   // offset centrujący bywa ujemny albo poza maksimum paska
+        Invalidate();
+    }
+
     // Dosuwa _scrollOffsetX do prawidłowego zakresu paska i synchronizuje jego Value
     // (ZoomedScrollOffset może zwrócić wartość ujemną lub powyżej maksimum).
     // UWAGA: ten obustronny clamp jest konieczny — RecalcHScroll przycina offset tylko

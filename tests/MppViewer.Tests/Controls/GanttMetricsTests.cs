@@ -111,4 +111,34 @@ public class GanttMetricsTests
     [Fact]
     public void ClampZoom_FitEqualsMax_AlwaysReturnsMax()
         => Assert.Equal(GanttMetrics.MaxPixelsPerDay, GanttMetrics.ClampZoom(15f, GanttMetrics.MaxPixelsPerDay));
+
+    // --- CenteredScrollOffset: skala + przewinięcie dla "fit to task" ---
+
+    [Fact]
+    public void CenteredScrollOffset_RangeInMiddle_PutsRangeCenterAtViewportCenter()
+    {
+        var rangeStart = new DateTime(2025, 6, 1);   // 151 dni od startu projektu
+        var rangeEnd = new DateTime(2025, 6, 11);    // 161 dni od startu projektu
+        // środek zakresu = 156 dni * 15 px = 2340; minus połowa widoku (400) = 1940
+        int offset = GanttMetrics.CenteredScrollOffset(rangeStart, rangeEnd, Start, PixelsPerDay, 800);
+        Assert.Equal(1940, offset);
+    }
+
+    [Fact]
+    public void CenteredScrollOffset_RangeAtProjectStart_ReturnsNegative()
+    {
+        // Zakres przy samym początku projektu nie da się wyśrodkować — połowa widoku
+        // wypada przed osią. Wynik jest ujemny; dosunięcie do zera należy do wywołującego.
+        int offset = GanttMetrics.CenteredScrollOffset(Start, Start.AddDays(10), Start, PixelsPerDay, 800);
+        Assert.Equal(-325, offset);
+    }
+
+    [Fact]
+    public void CenteredScrollOffset_ZeroSpanMilestone_CentersOnThatPoint()
+    {
+        var milestone = new DateTime(2025, 3, 1);    // 59 dni od startu projektu
+        // punkt = 59 * 15 = 885; minus połowa widoku (400) = 485
+        int offset = GanttMetrics.CenteredScrollOffset(milestone, milestone, Start, PixelsPerDay, 800);
+        Assert.Equal(485, offset);
+    }
 }
