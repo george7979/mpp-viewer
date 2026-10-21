@@ -141,4 +141,66 @@ public class GanttMetricsTests
         int offset = GanttMetrics.CenteredScrollOffset(milestone, milestone, Start, PixelsPerDay, 800);
         Assert.Equal(485, offset);
     }
+
+    // Szerokości etykiet jak przy czcionce 8 pt: dzień ≈ 20 px, tydzień ≈ 42 px.
+    private const float DayLabel = 20f;
+    private const float WeekLabel = 42f;
+
+    [Theory]
+    [InlineData(60f, TimeUnit.Month, TimeUnit.Day)]
+    [InlineData(20f, TimeUnit.Month, TimeUnit.Day)]
+    [InlineData(19.9f, TimeUnit.Month, TimeUnit.Week)]
+    [InlineData(6f, TimeUnit.Month, TimeUnit.Week)]
+    [InlineData(5.9f, TimeUnit.Year, TimeUnit.Month)]
+    [InlineData(2f, TimeUnit.Year, TimeUnit.Month)]
+    public void ChooseTimescale_PicksFinestUnitThatFitsItsLabel(float ppd, TimeUnit upper, TimeUnit lower)
+    {
+        var scale = GanttMetrics.ChooseTimescale(ppd, DayLabel, WeekLabel);
+        Assert.Equal(new Timescale(upper, lower), scale);
+    }
+
+    [Theory]
+    [InlineData("2026-10-21", "2026-10-19")]   // środa → poniedziałek
+    [InlineData("2026-10-19", "2026-10-19")]   // poniedziałek zostaje
+    [InlineData("2026-10-25", "2026-10-19")]   // niedziela należy do tygodnia od poniedziałku
+    [InlineData("2026-11-01", "2026-10-26")]   // tydzień przechodzący przez granicę miesiąca
+    public void UnitStart_Week_StartsOnMonday(string date, string expected)
+    {
+        var start = GanttMetrics.UnitStart(DateTime.Parse(date).AddHours(15), TimeUnit.Week);
+        Assert.Equal(DateTime.Parse(expected), start);
+    }
+
+    [Fact]
+    public void UnitStart_MonthAndYear_FloorToFirstDay()
+    {
+        var d = new DateTime(2026, 10, 21, 9, 30, 0);
+        Assert.Equal(new DateTime(2026, 10, 1), GanttMetrics.UnitStart(d, TimeUnit.Month));
+        Assert.Equal(new DateTime(2026, 1, 1), GanttMetrics.UnitStart(d, TimeUnit.Year));
+        Assert.Equal(new DateTime(2026, 10, 21), GanttMetrics.UnitStart(d, TimeUnit.Day));
+    }
+
+    [Fact]
+    public void NextUnit_AdvancesByOneUnit()
+    {
+        var d = new DateTime(2026, 10, 19);
+        Assert.Equal(new DateTime(2026, 10, 26), GanttMetrics.NextUnit(d, TimeUnit.Week));
+        Assert.Equal(new DateTime(2026, 11, 19), GanttMetrics.NextUnit(d, TimeUnit.Month));
+        Assert.Equal(new DateTime(2026, 10, 20), GanttMetrics.NextUnit(d, TimeUnit.Day));
+    }
+
+    [Fact]
+    public void StickyLabelX_UnitFullyVisible_LabelAtUnitStart()
+        => Assert.Equal(100f, GanttMetrics.StickyLabelX(100f, 900f, 60f));
+
+    [Fact]
+    public void StickyLabelX_UnitStartOffScreen_LabelSticksToLeftEdge()
+        => Assert.Equal(0f, GanttMetrics.StickyLabelX(-500f, 900f, 60f));
+
+    [Fact]
+    public void StickyLabelX_UnitEndApproaching_LabelPushedOutByEnd()
+        => Assert.Equal(-20f, GanttMetrics.StickyLabelX(-500f, 40f, 60f));
+
+    [Fact]
+    public void StickyLabelX_UnitNarrowerThanLabel_StaysAtUnitStart()
+        => Assert.Equal(100f, GanttMetrics.StickyLabelX(100f, 130f, 60f));
 }

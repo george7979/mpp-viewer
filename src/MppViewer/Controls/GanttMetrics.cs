@@ -1,5 +1,11 @@
 namespace MppViewer.Controls;
 
+/// <summary>Calendar unit used by one row of the two-tier timeline header.</summary>
+public enum TimeUnit { Year, Month, Week, Day }
+
+/// <summary>The pair of units shown in the header: coarse on top, fine below.</summary>
+public readonly record struct Timescale(TimeUnit Upper, TimeUnit Lower);
+
 public static class GanttMetrics
 {
     /// <summary>Lower bound for the time-axis scale (≈ multi-year overview).</summary>
@@ -66,5 +72,53 @@ public static class GanttMetrics
         if (days <= 0) return MaxPixelsPerDay;
         float ppd = (float)((viewportWidth - FitMargin) / days);
         return ClampPixelsPerDay(ppd);
+    }
+
+    /// <summary>
+    /// Pick the finest lower-tier unit whose cell is still wide enough for its label:
+    /// days when a day fits dayLabelWidth, else weeks when a week fits weekLabelWidth,
+    /// else months. The upper tier is the next coarser unit (month above days/weeks,
+    /// year above months). Label widths are measured by the caller, so the choice
+    /// follows the actual font and DPI rather than hard-coded pixel thresholds.
+    /// </summary>
+    public static Timescale ChooseTimescale(float pixelsPerDay, float dayLabelWidth, float weekLabelWidth)
+    {
+        if (pixelsPerDay >= dayLabelWidth) return new Timescale(TimeUnit.Month, TimeUnit.Day);
+        if (pixelsPerDay * 7 >= weekLabelWidth) return new Timescale(TimeUnit.Month, TimeUnit.Week);
+        return new Timescale(TimeUnit.Year, TimeUnit.Month);
+    }
+
+    /// <summary>Start of the unit containing date. Weeks start on Monday (ISO 8601).</summary>
+    public static DateTime UnitStart(DateTime date, TimeUnit unit)
+    {
+        var day = date.Date;
+        return unit switch
+        {
+            TimeUnit.Year => new DateTime(day.Year, 1, 1),
+            TimeUnit.Month => new DateTime(day.Year, day.Month, 1),
+            TimeUnit.Week => day.AddDays(-(((int)day.DayOfWeek + 6) % 7)),   // Mon=0 … Sun=6
+            _ => day,
+        };
+    }
+
+    /// <summary>Start of the unit following the one that starts at unitStart.</summary>
+    public static DateTime NextUnit(DateTime unitStart, TimeUnit unit) => unit switch
+    {
+        TimeUnit.Year => unitStart.AddYears(1),
+        TimeUnit.Month => unitStart.AddMonths(1),
+        TimeUnit.Week => unitStart.AddDays(7),
+        _ => unitStart.AddDays(1),
+    };
+
+    /// <summary>
+    /// Screen X for a unit's label that stays readable while the unit is partly scrolled
+    /// off the left edge: the label sticks to x = 0, then gets pushed out by the unit's
+    /// end so it never overlaps the next unit. Never placed left of the unit's own start.
+    /// </summary>
+    public static float StickyLabelX(float unitStartX, float unitEndX, float labelWidth)
+    {
+        float x = Math.Max(unitStartX, 0f);
+        x = Math.Min(x, unitEndX - labelWidth);
+        return Math.Max(x, unitStartX);
     }
 }

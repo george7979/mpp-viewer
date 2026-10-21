@@ -352,7 +352,7 @@ public class GanttControl : Panel
         int dataBottom = Math.Max(HeaderHeight, Height - _hScroll.Height);
         g.SetClip(new Rectangle(0, HeaderHeight, Width, dataBottom - HeaderHeight));
         DrawRowGuides(g);
-        DrawMonthGridlines(g);
+        DrawTimeGridlines(g);
         DrawTaskBars(g);
         DrawDependencies(g);
         g.ResetClip();
@@ -378,6 +378,44 @@ public class GanttControl : Panel
         }
     }
 
+    // Wysokość górnego wiersza dwupoziomowej skali; dolny zajmuje resztę HeaderHeight.
+    private const int UpperTierHeight = 22;
+    private const float LabelPadding = 6f;   // luz wokół etykiety przy wyborze poziomu skali
+    private static readonly Brush WeekendBrush = new SolidBrush(Color.FromArgb(20, 0, 0, 0));
+
+    // Dobiera skalę do bieżącego zoomu: najdrobniejsza jednostka, której etykieta się mieści.
+    private Timescale CurrentTimescale(Graphics g, Font lowerFont)
+    {
+        float dayW = g.MeasureString("30", lowerFont).Width + LabelPadding;
+        float weekW = g.MeasureString("30 Sep", lowerFont).Width + LabelPadding;
+        return GanttMetrics.ChooseTimescale(_pixelsPerDay, dayW, weekW);
+    }
+
+    // Data pod punktem ekranu — odwrotność DateToX, do wyznaczenia widocznego zakresu.
+    private DateTime XToDate(float x)
+        => _projectStart.AddDays((x + _scrollOffsetX) / _pixelsPerDay);
+
+    private static string UnitLabel(DateTime d, TimeUnit unit, bool upper) => unit switch
+    {
+        TimeUnit.Year => d.ToString("yyyy", CultureInfo.InvariantCulture),
+        TimeUnit.Month => d.ToString(upper ? "MMM yyyy" : "MMM", CultureInfo.InvariantCulture),
+        TimeUnit.Week => d.ToString("d MMM", CultureInfo.InvariantCulture),
+        _ => d.ToString("%d", CultureInfo.InvariantCulture),
+    };
+
+    // Kolejne jednostki pokrywające widoczny fragment osi: (początek, koniec) w datach.
+    private IEnumerable<(DateTime Start, DateTime End)> VisibleUnits(TimeUnit unit)
+    {
+        var last = XToDate(Width);
+        for (var d = GanttMetrics.UnitStart(XToDate(0), unit); d <= last; d = GanttMetrics.NextUnit(d, unit))
+            yield return (d, GanttMetrics.NextUnit(d, unit));
+    }
+
+    private static bool IsWeekend(DateTime d) => d.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+
+    // Dwupoziomowa skala jak w MS Project: górny wiersz = większa jednostka z etykietą
+    // przyklejoną do lewej krawędzi (zawsze widać, który to miesiąc/rok), dolny = drobniejsza
+    // jednostka dobrana do zoomu, więc przy żadnym przybliżeniu pasek nie jest pusty.
     private void DrawTimelineHeader(Graphics g)
     {
         g.FillRectangle(SystemBrushes.Control, 0, 0, Width, HeaderHeight);
@@ -385,30 +423,58 @@ public class GanttControl : Panel
 
         if (_tasks.Count == 0) return;
 
-        using var monthFont = new Font(Font.FontFamily, 8f, FontStyle.Bold);
-        var current = new DateTime(_projectStart.Year, _projectStart.Month, 1);
-        while (current <= _projectEnd)
+        using var upperFont = new Font(Font.FontFamily, 8f, FontStyle.Bold);
+        using var lowerFont = new Font(Font.FontFamily, 8f);
+        var scale = CurrentTimescale(g, lowerFont);
+        int lowerHeight = HeaderHeight - UpperTierHeight;
+
+        g.DrawLine(Pens.Silver, 0, UpperTierHeight, Width, UpperTierHeight);
+
+        foreach (var (start, end) in VisibleUnits(scale.Upper))
         {
-            float x = DateToX(current);
-            if (x > -120 && x < Width + 20)
-            {
-                g.DrawLine(Pens.Gray, x, HeaderHeight - 8, x, HeaderHeight);
-                g.DrawString(current.ToString("MMM yyyy", CultureInfo.InvariantCulture), monthFont, Brushes.Black, x + 3, 4);
-            }
-            current = current.AddMonths(1);
+            float x1 = DateToX(start), x2 = DateToX(end);
+            g.DrawLine(Pens.Gray, x1, 0, x1, UpperTierHeight);
+            string label = UnitLabel(start, scale.Upper, upper: true);
+            float w = g.MeasureString(label, upperFont).Width;
+            float lx = GanttMetrics.StickyLabelX(x1 + 3, x2, w);
+            g.DrawString(label, upperFont, Brushes.Black, lx, 4);
+        }
+
+        foreach (var (start, end) in VisibleUnits(scale.Lower))
+        {
+            float x1 = DateToX(start), x2 = DateToX(end);
+            if (scale.Lower == TimeUnit.Day && IsWeekend(start))
+                g.FillRectangle(WeekendBrush, x1, UpperTierHeight + 1, x2 - x1, lowerHeight - 2);
+            g.DrawLine(Pens.Silver, x1, UpperTierHeight, x1, HeaderHeight);
+            string label = UnitLabel(start, scale.Lower, upper: false);
+            var size = g.MeasureString(label, lowerFont);
+            // Dzień: etykieta wyśrodkowana w komórce; tydzień/miesiąc: od lewej, jak w górnym wierszu.
+            float lx = scale.Lower == TimeUnit.Day ? x1 + (x2 - x1 - size.Width) / 2 : x1 + 2;
+            g.DrawString(label, lowerFont, Brushes.DimGray, lx, UpperTierHeight + (lowerHeight - size.Height) / 2);
         }
     }
 
-    private void DrawMonthGridlines(Graphics g)
+    // Siatka idzie za skalą: jasne linie na granicach dolnego poziomu, ciemniejsze na
+    // granicach górnego; przy widoku dni dochodzą przyciemnione weekendy.
+    private void DrawTimeGridlines(Graphics g)
     {
         if (_tasks.Count == 0) return;
-        using var pen = new Pen(Color.FromArgb(238, 238, 238));
-        var current = new DateTime(_projectStart.Year, _projectStart.Month, 1);
-        while (current <= _projectEnd)
+        using var lowerFont = new Font(Font.FontFamily, 8f);
+        var scale = CurrentTimescale(g, lowerFont);
+        using var lowerPen = new Pen(Color.FromArgb(238, 238, 238));
+        using var upperPen = new Pen(Color.FromArgb(215, 215, 220));
+
+        foreach (var (start, end) in VisibleUnits(scale.Lower))
         {
-            float x = DateToX(current);
-            if (x >= 0 && x <= Width) g.DrawLine(pen, x, HeaderHeight, x, Height);
-            current = current.AddMonths(1);
+            float x1 = DateToX(start);
+            if (scale.Lower == TimeUnit.Day && IsWeekend(start))
+                g.FillRectangle(WeekendBrush, x1, HeaderHeight, DateToX(end) - x1, Height - HeaderHeight);
+            g.DrawLine(lowerPen, x1, HeaderHeight, x1, Height);
+        }
+        foreach (var (start, _) in VisibleUnits(scale.Upper))
+        {
+            float x1 = DateToX(start);
+            g.DrawLine(upperPen, x1, HeaderHeight, x1, Height);
         }
     }
 
