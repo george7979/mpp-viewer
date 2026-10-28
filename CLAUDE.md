@@ -6,10 +6,11 @@ MPP Viewer is a portable, **read-only** Windows desktop app (.NET 8 / WinForms) 
 
 ## Environment: dotnet is NOT native in WSL
 
-This repo is developed under WSL2, where `dotnet` on PATH does not exist. Use the Windows SDK explicitly for every command:
+This repo is developed under WSL2, where `dotnet` on PATH does not exist. Use the Windows SDK explicitly for every command. Its location depends on the machine: machine-wide install (`winget`, needs UAC) puts it in `Program Files`, a per-user install (`dotnet-install.ps1`, no admin — the only option from an unattended agent session) puts it in `%LOCALAPPDATA%`; the installer adds it only to the Windows PATH. Pick whichever exists:
 
 ```bash
 DOTNET="/mnt/c/Program Files/dotnet/dotnet.exe"
+[ -x "$DOTNET" ] || DOTNET="$(wslpath "$(cmd.exe /c 'echo %LOCALAPPDATA%' 2>/dev/null | tr -d '\r')")/Microsoft/dotnet/dotnet.exe"
 
 "$DOTNET" build  MppViewer.sln -c Release            # build everything
 "$DOTNET" test   MppViewer.sln -c Release            # run all tests (xUnit)
